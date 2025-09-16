@@ -1,0 +1,45 @@
+import React from 'react';
+import { createStackNavigator } from '@react-navigation/stack';
+import UploadReceiptScreen from '../screens/Create/UploadReceiptScreen';
+import ExpenseFormScreen from '../screens/Create/ExpenseFormScreen';
+import { theme } from '../styles/theme';
+
+export type CreateStackParamList = {
+  UploadReceipt: undefined;
+  ExpenseForm: { receiptUrl?: string };
+};
+
+const Stack = createStackNavigator<CreateStackParamList>();
+
+const CreateStack: React.FC = () => {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.surface,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        headerTitleStyle: {
+          color: theme.colors.text,
+          fontSize: theme.fontSize.title,
+          fontWeight: '600',
+        },
+        headerTintColor: theme.colors.primary,
+      }}
+    >
+      <Stack.Screen
+        name="UploadReceipt"
+        component={UploadReceiptScreen}
+        options={{ title: 'Create Expense' }}
+      />
+      <Stack.Screen
+        name="ExpenseForm"
+        component={ExpenseFormScreen}
+        options={{ title: 'Expense Details' }}
+      />
+    </Stack.Navigator>
+  );
+};
+
+export default CreateStack;
