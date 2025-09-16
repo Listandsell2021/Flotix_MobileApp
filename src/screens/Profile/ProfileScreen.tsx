@@ -9,13 +9,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../state/authSlice';
 import { theme } from '../../styles/theme';
 import Button from '../../components/Button';
 import Toast from '../../components/Toast';
+import LanguageSelector from '../../components/LanguageSelector';
 import { companiesApi, Company } from '../../api/companies';
 
 const ProfileScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { state, logout } = useAuth();
   const [loading, setLoading] = useState(false);
   const [company, setCompany] = useState<Company | null>(null);
@@ -195,6 +198,14 @@ const ProfileScreen: React.FC = () => {
             )}
           </ProfileSection>
 
+          {/* Settings */}
+          <ProfileSection title={t('settings.title')}>
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>{t('settings.language')}</Text>
+              <LanguageSelector showLabel={true} style={styles.languageSelector} />
+            </View>
+          </ProfileSection>
+
           {/* App Information */}
           <ProfileSection title="App Information">
             <InfoRow label="Version" value="1.0.0" />
@@ -325,6 +336,17 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     flex: 2,
     textAlign: 'right',
+  },
+  settingRow: {
+    marginBottom: theme.spacing.md,
+  },
+  settingLabel: {
+    fontSize: theme.fontSize.body,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.sm,
+  },
+  languageSelector: {
+    backgroundColor: theme.colors.backgroundSecondary,
   },
   actionsContainer: {
     marginVertical: theme.spacing.xl,

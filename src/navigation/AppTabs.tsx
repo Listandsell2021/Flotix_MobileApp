@@ -1,6 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import HomeScreen from '../screens/Home/HomeScreen';
 import CreateStack from './CreateStack';
 import HistoryStack from './HistoryStack';
@@ -37,6 +38,7 @@ const TabBarIcon: React.FC<{ focused: boolean; iconName: IconName }> = ({ focuse
 };
 
 const AppTabs: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -92,7 +94,7 @@ const AppTabs: React.FC = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          title: 'Profile',
+          title: t('navigation.profile'),
           tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="user" />,
           tabBarLabel: () => null,
         }}

@@ -1,0 +1,34 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता",
+    "cancel": "रद्द करें",
+    "save": "सेव करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "confirm": "पुष्टि करें",
+    "back": "वापस",
+    "next": "अगला",
+    "submit": "जमा करें"
+  },
+  "auth": {
+    "login": "लॉगिन",
+    "logout": "लॉगआउट",
+    "email": "ईमेल",
+    "password": "पासवर्ड"
+  },
+  "expenses": {
+    "title": "खर्च",
+    "addExpense": "खर्च जोड़ें",
+    "type": "प्रकार",
+    "amount": "राशि",
+    "fuel": "ईंधन",
+    "misc": "विविध"
+  },
+  "navigation": {
+    "home": "होम",
+    "expenses": "खर्च",
+    "profile": "प्रोफाइल"
+  }
+}

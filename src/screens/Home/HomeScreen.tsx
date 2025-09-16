@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../styles/theme';
 import { useAuth } from '../../state/authSlice';
 import Button from '../../components/Button';
@@ -25,6 +26,7 @@ import Icon from '../../components/Icon';
 
 
 const HomeScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const { logout, state } = useAuth();
   
@@ -87,13 +89,13 @@ const HomeScreen: React.FC = () => {
       // Check if this is an auth failure
       if (error.authFailed || error.code === 'NO_REFRESH_TOKEN' || error.message?.includes('Session expired')) {
         console.log('🔐 Auth failed, logging out...');
-        showToast('Session expired. Please login again.', 'error');
+        showToast(t('auth.sessionExpired'), 'error');
         // Give user time to see the message
         setTimeout(() => {
           logout();
         }, 1500);
       } else {
-        showToast('Failed to load expenses', 'error');
+        showToast(t('errors.loadExpenses'), 'error');
       }
       // Set empty array on error to prevent undefined errors
       setExpenses([]);
@@ -117,7 +119,7 @@ const HomeScreen: React.FC = () => {
       console.log('Vehicle data loaded successfully:', response.data);
     } catch (error: any) {
       console.error('Error loading vehicle data:', error);
-      showToast('Failed to load vehicle information', 'error');
+      showToast(t('errors.loadVehicle'), 'error');
     }
   };
 
@@ -214,7 +216,7 @@ const HomeScreen: React.FC = () => {
                 </View>
                 <View style={styles.compactAppInfo}>
                   <Text style={styles.compactAppName}>Flotix</Text>
-                  <Text style={styles.compactAppSubtitle}>Expense Tracker</Text>
+                  <Text style={styles.compactAppSubtitle}>{t('home.expenseTracker')}</Text>
                 </View>
               </View>
               <TouchableOpacity style={styles.compactProfileSection} onPress={() => navigation.navigate('Profile')}>
@@ -228,7 +230,7 @@ const HomeScreen: React.FC = () => {
             {state.user && (
               <TouchableOpacity style={styles.compactWelcomeSection} onPress={() => navigation.navigate('Profile')}>
                 <Text style={styles.compactWelcomeText}>
-                  Hi {state.user.name?.split(' ')[0] || 'Driver'}
+                  {t('home.welcome')} {state.user.name?.split(' ')[0] || t('home.driver')}
                 </Text>
                 <Text style={styles.compactDateText}>
                   {new Date().toLocaleDateString('de-DE', { 
@@ -245,7 +247,7 @@ const HomeScreen: React.FC = () => {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
-            <Text style={styles.loadingText}>Loading your expenses...</Text>
+            <Text style={styles.loadingText}>{t('home.loading')}</Text>
           </View>
         ) : (
           <>
@@ -261,7 +263,7 @@ const HomeScreen: React.FC = () => {
                     <Text style={styles.heroAmount}>
                       {formatCurrency(stats.thisMonth, stats.currency)}
                     </Text>
-                    <Text style={styles.heroLabel}>This Month</Text>
+                    <Text style={styles.heroLabel}>{t('home.thisMonth')}</Text>
                   </View>
                   <View style={styles.trendIndicator}>
                     <Icon name="trend-up" size={16} color="#10b981" />
@@ -272,13 +274,13 @@ const HomeScreen: React.FC = () => {
                     <Text style={styles.subStatValue}>
                       {formatCurrency(stats.fuelExpenses, stats.currency)}
                     </Text>
-                    <Text style={styles.subStatLabel}>Fuel (Month)</Text>
+                    <Text style={styles.subStatLabel}>{t('home.fuelMonth')}</Text>
                   </View>
                   <View style={styles.subStat}>
                     <Text style={styles.subStatValue}>
                       {formatCurrency(stats.miscExpenses, stats.currency)}
                     </Text>
-                    <Text style={styles.subStatLabel}>Misc (Month)</Text>
+                    <Text style={styles.subStatLabel}>{t('home.miscMonth')}</Text>
                   </View>
                 </View>
               </View>
@@ -321,16 +323,16 @@ const HomeScreen: React.FC = () => {
             {/* Recent Activity - Clean & Compact Design */}
             <View style={styles.recentContainer}>
               <View style={styles.cleanSectionHeader}>
-                <Text style={styles.cleanSectionTitle}>Recent Activity</Text>
+                <Text style={styles.cleanSectionTitle}>{t('home.recentActivity')}</Text>
                 <TouchableOpacity style={styles.cleanViewAllButton} onPress={handleViewAllExpenses}>
-                  <Text style={styles.cleanViewAllText}>View All</Text>
+                  <Text style={styles.cleanViewAllText}>{t('home.viewAll')}</Text>
                 </TouchableOpacity>
               </View>
               
               {!expenses || expenses.length === 0 ? (
                 <View style={styles.cleanEmptyState}>
-                  <Text style={styles.cleanEmptyTitle}>No expenses yet</Text>
-                  <Text style={styles.cleanEmptyText}>Start tracking your expenses</Text>
+                  <Text style={styles.cleanEmptyTitle}>{t('home.noExpenses')}</Text>
+                  <Text style={styles.cleanEmptyText}>{t('home.startTracking')}</Text>
                 </View>
               ) : (
                 <View style={styles.cleanActivityList}>
@@ -371,7 +373,7 @@ const HomeScreen: React.FC = () => {
 
 
             <Button
-              title="Logout"
+              title={t('auth.logout')}
               onPress={handleLogout}
               variant="outline"
               style={styles.logoutButton}
@@ -399,7 +401,7 @@ const HomeScreen: React.FC = () => {
         <View style={styles.modalContainer}>
           <View style={styles.expenseDetailModal}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Expense Details</Text>
+              <Text style={styles.modalTitle}>{t('home.expenseDetails')}</Text>
               <TouchableOpacity 
                 style={styles.closeButton}
                 onPress={() => setShowExpenseDetail(false)}
@@ -413,7 +415,7 @@ const HomeScreen: React.FC = () => {
                 {/* Receipt Image */}
                 {selectedExpense.receiptUrl && (
                   <View style={styles.receiptImageContainer}>
-                    <Text style={styles.sectionTitle}>Receipt Image</Text>
+                    <Text style={styles.sectionTitle}>{t('home.receiptImage')}</Text>
                     <Image 
                       source={{ uri: selectedExpense.receiptUrl }}
                       style={styles.receiptImage}
@@ -425,22 +427,22 @@ const HomeScreen: React.FC = () => {
 
                 {/* Expense Details */}
                 <View style={styles.detailSection}>
-                  <Text style={styles.sectionTitle}>Expense Information</Text>
+                  <Text style={styles.sectionTitle}>{t('home.expenseInformation')}</Text>
                   
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Type:</Text>
+                    <Text style={styles.detailLabel}>{t('expense.type')}:</Text>
                     <Text style={styles.detailValue}>{selectedExpense.type}</Text>
                   </View>
 
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Amount:</Text>
+                    <Text style={styles.detailLabel}>{t('expense.amount')}:</Text>
                     <Text style={styles.detailValue}>
                       {formatCurrency(selectedExpense.amountFinal, selectedExpense.currency)}
                     </Text>
                   </View>
 
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Date:</Text>
+                    <Text style={styles.detailLabel}>{t('expense.date')}:</Text>
                     <Text style={styles.detailValue}>
                       {formatDisplayDate(selectedExpense.date)}
                     </Text>
@@ -448,27 +450,27 @@ const HomeScreen: React.FC = () => {
 
                   {selectedExpense.merchant && (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Merchant:</Text>
+                      <Text style={styles.detailLabel}>{t('expense.merchant')}:</Text>
                       <Text style={styles.detailValue}>{selectedExpense.merchant}</Text>
                     </View>
                   )}
 
                   {selectedExpense.category && (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Category:</Text>
+                      <Text style={styles.detailLabel}>{t('expense.category')}:</Text>
                       <Text style={styles.detailValue}>{selectedExpense.category}</Text>
                     </View>
                   )}
 
                   {selectedExpense.notes && (
                     <View style={styles.detailRow}>
-                      <Text style={styles.detailLabel}>Notes:</Text>
+                      <Text style={styles.detailLabel}>{t('expense.notes')}:</Text>
                       <Text style={styles.detailValue}>{selectedExpense.notes}</Text>
                     </View>
                   )}
 
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Created:</Text>
+                    <Text style={styles.detailLabel}>{t('expense.created')}:</Text>
                     <Text style={styles.detailValue}>
                       {formatDisplayDate(selectedExpense.createdAt)}
                     </Text>

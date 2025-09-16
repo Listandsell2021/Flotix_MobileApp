@@ -1,0 +1,34 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "submit": "Soumettre"
+  },
+  "auth": {
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "email": "E-mail",
+    "password": "Mot de passe"
+  },
+  "expenses": {
+    "title": "Dépenses",
+    "addExpense": "Ajouter une dépense",
+    "type": "Type",
+    "amount": "Montant",
+    "fuel": "Carburant",
+    "misc": "Divers"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "expenses": "Dépenses",
+    "profile": "Profil"
+  }
+}

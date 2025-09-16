@@ -22,7 +22,7 @@ class OCRService {
 
   constructor() {
     // ⚠️ For local testing only. In production call your backend (see analyzeReceiptViaBackend).
-    this.apiKey = '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';
+    //this.apiKey = '';
   }
 
   /**

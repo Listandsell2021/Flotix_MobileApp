@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { theme } from '../../styles/theme';
 import { useExpense } from '../../state/expenseSlice';
 import { expensesApi, Expense } from '../../api/expenses';
@@ -22,6 +23,7 @@ import Toast from '../../components/Toast';
 import Icon from '../../components/Icon';
 
 const ExpensesListScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { state, setExpenses, setLoading, setError } = useExpense();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
@@ -67,7 +69,7 @@ const ExpensesListScreen: React.FC = () => {
       setExpenses(response.items);
     } catch (error) {
       console.error('Load expenses error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load expenses';
+      const errorMessage = error instanceof Error ? error.message : t('errors.loadExpenses');
       setError(errorMessage);
       showToast(errorMessage, 'error');
     } finally {
@@ -203,7 +205,7 @@ const ExpensesListScreen: React.FC = () => {
             
             <View style={styles.expenseMainInfo}>
               <View style={styles.expenseTopRow}>
-                <Text style={styles.expenseType}>{expense.type}</Text>
+                <Text style={styles.expenseType}>{t(`expense.type.${expense.type.toLowerCase()}`)}</Text>
                 <Text style={styles.amountText}>
                   {formatCurrency(expense.amountFinal, expense.currency)}
                 </Text>
@@ -237,11 +239,11 @@ const ExpensesListScreen: React.FC = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateTitle}>No expenses found</Text>
+      <Text style={styles.emptyStateTitle}>{t('expenses.empty.title')}</Text>
       <Text style={styles.emptyStateText}>
         {filters.type
-          ? `No ${filters.type.toLowerCase()} expenses to display`
-          : 'Start by creating your first expense'}
+          ? t('expenses.empty.filtered', { type: filters.type.toLowerCase() })
+          : t('expenses.empty.subtitle')}
       </Text>
     </View>
   );
@@ -257,7 +259,7 @@ const ExpensesListScreen: React.FC = () => {
           <Icon name="search" size={16} color={theme.colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search expenses..."
+            placeholder={t('expenses.search')}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={theme.colors.textSecondary}
@@ -289,7 +291,7 @@ const ExpensesListScreen: React.FC = () => {
             onPress={() => handleFilterChange('')}
           >
             <Text style={[styles.quickFilterText, !filters.type && styles.quickFilterTextActive]}>
-              All Types
+              {t('expenses.filter.allTypes')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity

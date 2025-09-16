@@ -9,14 +9,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../state/authSlice';
 import { authApi } from '../../api/auth';
 import { theme } from '../../styles/theme';
 import TextInput from '../../components/TextInput';
 import Button from '../../components/Button';
 import Toast from '../../components/Toast';
+import LanguageSelector from '../../components/LanguageSelector';
 
 const LoginScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,15 +43,15 @@ const LoginScreen: React.FC = () => {
     const newErrors: { email?: string; password?: string } = {};
 
     if (!email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = t('validation.required');
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t('validation.invalidEmail');
     }
 
     if (!password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = t('validation.required');
     } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = t('validation.minLength', { min: 6 });
     }
 
     setErrors(newErrors);
@@ -78,13 +81,13 @@ const LoginScreen: React.FC = () => {
       // Handle case where driverData might not be present
       const driverData = response.data.driverData || null;
       await login(response.data.user, driverData, response.data.tokens.accessToken, response.data.tokens.refreshToken);
-      showToast('Login successful!', 'success');
+      showToast(t('auth.loginSuccess'), 'success');
     } catch (error: any) {
       console.error('Login error:', error);
-      let errorMessage = 'Login failed. Please try again.';
-      
+      let errorMessage = t('errors.generic');
+
       if (error.response?.status === 401) {
-        errorMessage = 'Invalid email or password. Please check your credentials.';
+        errorMessage = t('auth.loginError');
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
@@ -107,10 +110,11 @@ const LoginScreen: React.FC = () => {
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Flotix</Text>
             <Text style={styles.subtitle}>Fleet Expense Management</Text>
+            <LanguageSelector style={styles.languageSelector} />
           </View>
 
           <View style={styles.formContainer}>
-            <Text style={styles.formTitle}>Sign In</Text>
+            <Text style={styles.formTitle}>{t('auth.signIn')}</Text>
             
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
@@ -122,7 +126,7 @@ const LoginScreen: React.FC = () => {
             </View>
             
             <TextInput
-              label="Email"
+              label={t('auth.email')}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -131,12 +135,12 @@ const LoginScreen: React.FC = () => {
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
-              placeholder="Enter your email"
+              placeholder={t('auth.email')}
               error={errors.email}
             />
 
             <TextInput
-              label="Password"
+              label={t('auth.password')}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -144,12 +148,12 @@ const LoginScreen: React.FC = () => {
               }}
               secureTextEntry
               autoComplete="password"
-              placeholder="Enter your password"
+              placeholder={t('auth.password')}
               error={errors.password}
             />
 
             <Button
-              title="Sign In"
+              title={t('auth.signIn')}
               onPress={handleLogin}
               loading={loading}
               style={styles.loginButton}
@@ -196,6 +200,11 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.body,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+  },
+  languageSelector: {
+    marginTop: theme.spacing.lg,
+    alignSelf: 'center',
+    minWidth: 150,
   },
   formContainer: {
     backgroundColor: theme.colors.surface,
