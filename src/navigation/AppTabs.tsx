@@ -1,13 +1,15 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import HomeScreen from '../screens/Home/HomeScreen';
-import CreateStack from './CreateStack';
-import HistoryStack from './HistoryStack';
-import ProfileScreen from '../screens/Profile/ProfileScreen';
-import { theme } from '../styles/theme';
-import Icon, { IconName } from '../components/Icon';
+import React from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { View } from "react-native";
+import { useTranslation } from "react-i18next";
+import HomeScreen from "../screens/Home/HomeScreen";
+import CreateStack from "./CreateStack";
+import HistoryStack from "./HistoryStack";
+import ProfileScreen from "../screens/Profile/ProfileScreen";
+import { theme } from "../styles/theme";
+import Icon, { IconName } from "../components/Icon";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 
 export type AppTabsParamList = {
   Home: undefined;
@@ -18,16 +20,21 @@ export type AppTabsParamList = {
 
 const Tab = createBottomTabNavigator<AppTabsParamList>();
 
-const TabBarIcon: React.FC<{ focused: boolean; iconName: IconName }> = ({ focused, iconName }) => {
+const TabBarIcon: React.FC<{ focused: boolean; iconName: IconName }> = ({
+  focused,
+  iconName,
+}) => {
   return (
-    <View style={{
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: focused ? theme.colors.primary + '15' : 'transparent',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
+    <View
+      style={{
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: focused ? theme.colors.primary + "15" : "transparent",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
       <Icon
         name={iconName}
         size={20}
@@ -39,6 +46,9 @@ const TabBarIcon: React.FC<{ focused: boolean; iconName: IconName }> = ({ focuse
 
 const AppTabs: React.FC = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+
+  const navigation = useNavigation();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -47,8 +57,8 @@ const AppTabs: React.FC = () => {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
-          height: 60,
-          paddingBottom: 8,
+          // height: 60,
+          paddingBottom: insets.bottom + 8,
           paddingTop: 8,
         },
         headerStyle: {
@@ -59,7 +69,7 @@ const AppTabs: React.FC = () => {
         headerTitleStyle: {
           color: theme.colors.text,
           fontSize: theme.fontSize.title,
-          fontWeight: '600',
+          fontWeight: "600",
         },
       }}
     >
@@ -68,7 +78,9 @@ const AppTabs: React.FC = () => {
         component={HomeScreen}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="home" />,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon focused={focused} iconName="home" />
+          ),
           tabBarLabel: () => null,
         }}
       />
@@ -77,7 +89,9 @@ const AppTabs: React.FC = () => {
         component={CreateStack}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="plus" />,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon focused={focused} iconName="plus" />
+          ),
           tabBarLabel: () => null,
         }}
       />
@@ -86,7 +100,9 @@ const AppTabs: React.FC = () => {
         component={HistoryStack}
         options={{
           headerShown: false,
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="chart" />,
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon focused={focused} iconName="chart" />
+          ),
           tabBarLabel: () => null,
         }}
       />
@@ -94,8 +110,10 @@ const AppTabs: React.FC = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          title: t('navigation.profile'),
-          tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="user" />,
+          title: t("navigation.profile"),
+          tabBarIcon: ({ focused }) => (
+            <TabBarIcon focused={focused} iconName="user" />
+          ),
           tabBarLabel: () => null,
         }}
       />

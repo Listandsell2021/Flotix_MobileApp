@@ -1,8 +1,9 @@
-import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-import ExpensesListScreen from '../screens/History/ExpensesListScreen';
-import ExpenseDetailScreen from '../screens/History/ExpenseDetailScreen';
-import { theme } from '../styles/theme';
+import React from "react";
+import { createStackNavigator } from "@react-navigation/stack";
+import ExpensesListScreen from "../screens/History/ExpensesListScreen";
+import ExpenseDetailScreen from "../screens/History/ExpenseDetailScreen";
+import { theme } from "../styles/theme";
+import { useTranslation } from "react-i18next";
 
 export type HistoryStackParamList = {
   ExpensesList: undefined;
@@ -12,6 +13,7 @@ export type HistoryStackParamList = {
 const Stack = createStackNavigator<HistoryStackParamList>();
 
 const HistoryStack: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <Stack.Navigator
       screenOptions={{
@@ -23,7 +25,7 @@ const HistoryStack: React.FC = () => {
         headerTitleStyle: {
           color: theme.colors.text,
           fontSize: theme.fontSize.title,
-          fontWeight: '600',
+          fontWeight: "600",
         },
         headerTintColor: theme.colors.primary,
         cardStyle: {
@@ -35,14 +37,14 @@ const HistoryStack: React.FC = () => {
         name="ExpensesList"
         component={ExpensesListScreen}
         options={{
-          title: 'Expense History',
+          title: t("navigation.expenseHistory"),
         }}
       />
       <Stack.Screen
         name="ExpenseDetail"
         component={ExpenseDetailScreen}
         options={{
-          title: 'Expense Details',
+          title: t("navigation.expenseDetails"),
         }}
       />
     </Stack.Navigator>

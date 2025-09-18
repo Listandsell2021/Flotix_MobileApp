@@ -1,10 +1,12 @@
+import { API_KEY } from "@env";
+
 export interface ExpenseDetails {
   amount?: number;
   currency?: string;
   date?: string;
   merchant?: string;
   category?: string;
-  type?: 'FUEL' | 'MISC';
+  type?: "FUEL" | "MISC";
   imageUri?: string;
   odometerReading?: number;
 }
@@ -16,13 +18,13 @@ export interface OCRResponse {
 
 class OCRService {
   private readonly apiKey: string;
-  private readonly baseUrl = 'https://api.openai.com/v1/chat/completions';
+  private readonly baseUrl = "https://api.openai.com/v1/chat/completions";
   // Optional: switch models quickly
-  private readonly model = 'gpt-4o'; // or 'gpt-4o-mini'
+  private readonly model = "gpt-4o"; // or 'gpt-4o-mini'
 
   constructor() {
     // ⚠️ For local testing only. In production call your backend (see analyzeReceiptViaBackend).
-    //this.apiKey = '';
+    this.apiKey = API_KEY;
   }
 
   /**
@@ -35,10 +37,10 @@ class OCRService {
         model: this.model,
         messages: [
           {
-            role: 'user',
+            role: "user",
             content: [
               {
-                type: 'text',
+                type: "text",
                 text:
                   `You are a receipt extraction engine. Extract this JSON:\n` +
                   `{\n` +
@@ -54,42 +56,44 @@ class OCRService {
                   `- If a field is unknown, set it to null.`,
               },
               {
-                type: 'image_url',
+                type: "image_url",
                 image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
               },
             ],
           },
         ],
         // 🔒 Forces JSON-only response so JSON.parse won't break
-        response_format: { type: 'json_object' as const },
+        response_format: { type: "json_object" as const },
         max_tokens: 500,
         temperature: 0.1,
       };
 
       const response = await fetch(this.baseUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(body),
       });
 
       if (!response.ok) {
-        const text = await response.text().catch(() => '');
-        throw new Error(`OpenAI API error: ${response.status} ${response.statusText} ${text}`);
+        const text = await response.text().catch(() => "");
+        throw new Error(
+          `OpenAI API error: ${response.status} ${response.statusText} ${text}`
+        );
       }
 
       const result = await response.json();
       let content: string | undefined = result?.choices?.[0]?.message?.content;
 
-      if (!content) throw new Error('No content in OpenAI response');
+      if (!content) throw new Error("No content in OpenAI response");
 
       // Safety: if the model ignored response_format and sent markdown,
       // strip triple backticks ```json ... ```
       let cleaned = content.trim();
-      if (cleaned.startsWith('```')) {
-        cleaned = cleaned.replace(/```(json)?/g, '').trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/```(json)?/g, "").trim();
       }
 
       let parsed: any;
@@ -97,18 +101,18 @@ class OCRService {
         parsed = JSON.parse(cleaned);
       } catch (e) {
         // Log what we got for debugging
-        console.log('Raw content that failed to parse:', cleaned);
-        throw new Error('Invalid JSON returned from OpenAI');
+        console.log("Raw content that failed to parse:", cleaned);
+        throw new Error("Invalid JSON returned from OpenAI");
       }
 
       const normalized = this.normalizeExpense(parsed);
 
       return { success: true, data: normalized };
     } catch (error) {
-      console.error('OCR Service error:', error);
+      console.error("OCR Service error:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown OCR error',
+        error: error instanceof Error ? error.message : "Unknown OCR error",
       };
     }
   }
@@ -119,14 +123,17 @@ class OCRService {
    */
   async analyzeReceiptViaBackend(imageBase64: string): Promise<OCRResponse> {
     try {
-      const response = await fetch('http://YOUR_BACKEND_HOST:3001/api/ocr/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageBase64, format: 'base64' }),
-      });
+      const response = await fetch(
+        "http://YOUR_BACKEND_HOST:3001/api/ocr/analyze",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image: imageBase64, format: "base64" }),
+        }
+      );
 
       if (!response.ok) {
-        const text = await response.text().catch(() => '');
+        const text = await response.text().catch(() => "");
         throw new Error(`Backend OCR error: ${response.status} ${text}`);
       }
 
@@ -143,7 +150,7 @@ class OCRService {
       // Optional: fallback to direct OpenAI
       return this.analyzeReceipt(imageBase64);
     } catch (error) {
-      console.error('Backend OCR error:', error);
+      console.error("Backend OCR error:", error);
       // Optional: fallback to direct OpenAI
       return this.analyzeReceipt(imageBase64);
     }
@@ -152,26 +159,27 @@ class OCRService {
   private normalizeExpense(input: any): ExpenseDetails {
     // amount can be number or string — coerce to number if possible
     let amountNum: number | undefined;
-    if (typeof input?.amount === 'number') amountNum = input.amount;
-    else if (typeof input?.amount === 'string') {
-      const n = parseFloat(input.amount.replace(/[^\d.,-]/g, '').replace(',', '.'));
+    if (typeof input?.amount === "number") amountNum = input.amount;
+    else if (typeof input?.amount === "string") {
+      const n = parseFloat(
+        input.amount.replace(/[^\d.,-]/g, "").replace(",", ".")
+      );
       amountNum = isNaN(n) ? undefined : n;
     }
 
-    const currency = (input?.currency || 'EUR') as string;
+    const currency = (input?.currency || "EUR") as string;
     const date =
-  (typeof input?.date === 'string' && input.date.match(/^\d{4}-\d{2}-\d{2}$/)
-    ? new Date(input.date).toISOString()
-    : new Date().toISOString());
-
+      typeof input?.date === "string" && input.date.match(/^\d{4}-\d{2}-\d{2}$/)
+        ? new Date(input.date).toISOString()
+        : new Date().toISOString();
 
     const merchant =
-      typeof input?.merchant === 'string' && input.merchant.trim().length > 0
+      typeof input?.merchant === "string" && input.merchant.trim().length > 0
         ? input.merchant.trim()
         : undefined;
 
     const category =
-      typeof input?.category === 'string' && input.category.trim().length > 0
+      typeof input?.category === "string" && input.category.trim().length > 0
         ? input.category.trim()
         : undefined;
 
@@ -185,27 +193,30 @@ class OCRService {
       category,
       type,
     };
-    }
+  }
 
-  private determineExpenseType(category?: string, merchant?: string): 'FUEL' | 'MISC' {
-    if (!category && !merchant) return 'MISC';
+  private determineExpenseType(
+    category?: string,
+    merchant?: string
+  ): "FUEL" | "MISC" {
+    if (!category && !merchant) return "MISC";
     const fuelKeywords = [
-      'fuel',
-      'gas',
-      'gasoline',
-      'petrol',
-      'diesel',
-      'shell',
-      'bp',
-      'chevron',
-      'exxon',
-      'mobil',
-      'esso',
-      'aral',
-      'total',
+      "fuel",
+      "gas",
+      "gasoline",
+      "petrol",
+      "diesel",
+      "shell",
+      "bp",
+      "chevron",
+      "exxon",
+      "mobil",
+      "esso",
+      "aral",
+      "total",
     ];
-    const text = `${category || ''} ${merchant || ''}`.toLowerCase();
-    return fuelKeywords.some(k => text.includes(k)) ? 'FUEL' : 'MISC';
+    const text = `${category || ""} ${merchant || ""}`.toLowerCase();
+    return fuelKeywords.some((k) => text.includes(k)) ? "FUEL" : "MISC";
   }
 }
 

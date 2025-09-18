@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,45 +10,71 @@ import {
   TextInput,
   Modal,
   ScrollView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { useTranslation } from 'react-i18next';
-import { theme } from '../../styles/theme';
-import { useExpense } from '../../state/expenseSlice';
-import { expensesApi, Expense } from '../../api/expenses';
-import { formatCurrency } from '../../utils/currency';
-import { formatDisplayDate } from '../../utils/date';
-import Toast from '../../components/Toast';
-import Icon from '../../components/Icon';
+  Animated,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
+import { theme } from "../../styles/theme";
+import { useExpense } from "../../state/expenseSlice";
+import { expensesApi, Expense } from "../../api/expenses";
+import { formatCurrency } from "../../utils/currency";
+import { formatDisplayDate } from "../../utils/date";
+import Toast from "../../components/Toast";
+import Icon from "../../components/Icon";
 
 const ExpensesListScreen: React.FC = () => {
   const { t } = useTranslation();
   const { state, setExpenses, setLoading, setError } = useExpense();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
-    type: '' as 'Fuel' | 'Misc' | '',
-    dateRange: '' as 'all' | 'today' | 'week' | 'month' | 'year',
-    sortBy: 'date' as 'date' | 'amount' | 'merchant',
-    sortOrder: 'desc' as 'asc' | 'desc',
+    type: "" as "Fuel" | "Misc" | "",
+    dateRange: "" as "all" | "today" | "week" | "month" | "year",
+    sortBy: "date" as "date" | "amount" | "merchant",
+    sortOrder: "desc" as "asc" | "desc",
     page: 1,
   });
-  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: "success" | "error" | "info";
+  }>({
     visible: false,
-    message: '',
-    type: 'info',
+    message: "",
+    type: "info",
   });
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "info"
+  ) => {
     setToast({ visible: true, message, type });
   };
 
   const hideToast = () => {
-    setToast({ visible: false, message: '', type: 'info' });
+    setToast({ visible: false, message: "", type: "info" });
   };
+
+  const [rotateValue] = useState(new Animated.Value(0)); // Initial rotation
+
+  // Trigger animation when `filters.sortOrder` changes
+  useEffect(() => {
+    // Animate rotation from current to target value
+    Animated.timing(rotateValue, {
+      toValue: filters.sortOrder === "asc" ? 1 : 0, // 0 for -90deg, 1 for 90deg
+      duration: 300, // Animation duration in ms
+      useNativeDriver: true, // Use native driver for performance
+    }).start();
+  }, [filters.sortOrder]);
+
+  // Interpolate rotation value (0 => -90deg, 1 => 90deg)
+  const rotate = rotateValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["-90deg", "90deg"],
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -60,18 +86,21 @@ const ExpensesListScreen: React.FC = () => {
     try {
       setLoading(true);
       const params = {
-        ...(filters.type && { type: filters.type.toUpperCase() as 'FUEL' | 'MISC' }),
+        ...(filters.type && {
+          type: filters.type.toUpperCase() as "FUEL" | "MISC",
+        }),
         page: filters.page,
         pageSize: 20,
       };
-      
+
       const response = await expensesApi.getList(params);
       setExpenses(response.items);
     } catch (error) {
-      console.error('Load expenses error:', error);
-      const errorMessage = error instanceof Error ? error.message : t('errors.loadExpenses');
+      console.error("Load expenses error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : t("errors.loadExpenses");
       setError(errorMessage);
-      showToast(errorMessage, 'error');
+      showToast(errorMessage, "error");
     } finally {
       setLoading(false);
     }
@@ -83,27 +112,36 @@ const ExpensesListScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleFilterChange = (type: 'Fuel' | 'Misc' | '') => {
-    setFilters(prev => ({ ...prev, type, page: 1 }));
+  const handleFilterChange = (type: "Fuel" | "Misc" | "") => {
+    setFilters((prev) => ({ ...prev, type, page: 1 }));
   };
 
   const getDateRange = (range: string) => {
     const now = new Date();
-    let startDate = '';
-    
+    let startDate = "";
+
     switch (range) {
-      case 'today':
-        startDate = now.toISOString().split('T')[0];
+      case "today":
+        startDate = now.toISOString().split("T")[0];
         return { startDate, endDate: startDate };
-      case 'week':
+      case "week":
         const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
-        return { startDate: weekStart.toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] };
-      case 'month':
+        return {
+          startDate: weekStart.toISOString().split("T")[0],
+          endDate: new Date().toISOString().split("T")[0],
+        };
+      case "month":
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        return { startDate: monthStart.toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] };
-      case 'year':
+        return {
+          startDate: monthStart.toISOString().split("T")[0],
+          endDate: new Date().toISOString().split("T")[0],
+        };
+      case "year":
         const yearStart = new Date(now.getFullYear(), 0, 1);
-        return { startDate: yearStart.toISOString().split('T')[0], endDate: new Date().toISOString().split('T')[0] };
+        return {
+          startDate: yearStart.toISOString().split("T")[0],
+          endDate: new Date().toISOString().split("T")[0],
+        };
       default:
         return {};
     }
@@ -115,27 +153,30 @@ const ExpensesListScreen: React.FC = () => {
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      filteredExpenses = filteredExpenses.filter(expense =>
-        expense.merchant?.toLowerCase().includes(query) ||
-        expense.notes?.toLowerCase().includes(query) ||
-        expense.category?.toLowerCase().includes(query) ||
-        expense.type.toLowerCase().includes(query)
+      filteredExpenses = filteredExpenses.filter(
+        (expense) =>
+          expense.merchant?.toLowerCase().includes(query) ||
+          expense.notes?.toLowerCase().includes(query) ||
+          expense.category?.toLowerCase().includes(query) ||
+          expense.type.toLowerCase().includes(query)
       );
     }
 
     // Type filter
     if (filters.type) {
-      filteredExpenses = filteredExpenses.filter(expense => 
-        expense.type === filters.type || expense.type.toUpperCase() === filters.type.toUpperCase()
+      filteredExpenses = filteredExpenses.filter(
+        (expense) =>
+          expense.type === filters.type ||
+          expense.type.toUpperCase() === filters.type.toUpperCase()
       );
     }
 
     // Date range filter
-    if (filters.dateRange && filters.dateRange !== 'all') {
+    if (filters.dateRange && filters.dateRange !== "all") {
       const { startDate, endDate } = getDateRange(filters.dateRange);
       if (startDate && endDate) {
-        filteredExpenses = filteredExpenses.filter(expense => {
-          const expenseDate = expense.date.split('T')[0];
+        filteredExpenses = filteredExpenses.filter((expense) => {
+          const expenseDate = expense.date.split("T")[0];
           return expenseDate >= startDate && expenseDate <= endDate;
         });
       }
@@ -144,22 +185,23 @@ const ExpensesListScreen: React.FC = () => {
     // Sorting
     filteredExpenses.sort((a, b) => {
       let compareValue = 0;
-      
+
       switch (filters.sortBy) {
-        case 'date':
-          compareValue = new Date(a.date).getTime() - new Date(b.date).getTime();
+        case "date":
+          compareValue =
+            new Date(a.date).getTime() - new Date(b.date).getTime();
           break;
-        case 'amount':
+        case "amount":
           compareValue = (a.amountFinal || 0) - (b.amountFinal || 0);
           break;
-        case 'merchant':
-          compareValue = (a.merchant || '').localeCompare(b.merchant || '');
+        case "merchant":
+          compareValue = (a.merchant || "").localeCompare(b.merchant || "");
           break;
         default:
           compareValue = 0;
       }
-      
-      return filters.sortOrder === 'asc' ? compareValue : -compareValue;
+
+      return filters.sortOrder === "asc" ? compareValue : -compareValue;
     });
 
     return filteredExpenses;
@@ -167,54 +209,77 @@ const ExpensesListScreen: React.FC = () => {
 
   const clearFilters = () => {
     setFilters({
-      type: '',
-      dateRange: 'all',
-      sortBy: 'date',
-      sortOrder: 'desc',
+      type: "",
+      dateRange: "all",
+      sortBy: "date",
+      sortOrder: "desc",
       page: 1,
     });
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   const getActiveFiltersCount = () => {
     let count = 0;
     if (filters.type) count++;
-    if (filters.dateRange && filters.dateRange !== 'all') count++;
+    if (filters.dateRange && filters.dateRange !== "all") count++;
     if (searchQuery.trim()) count++;
     return count;
   };
 
   const ExpenseItem: React.FC<{ expense: Expense }> = ({ expense }) => {
     const isManual = !expense.ocr || !expense.amountExtracted;
-    
+
     const handlePress = () => {
-      (navigation as any).navigate('ExpenseDetail', { expenseId: expense._id || expense.id });
+      (navigation as any).navigate("ExpenseDetail", {
+        expenseId: expense._id || expense.id,
+      });
     };
-    
+
     return (
-      <TouchableOpacity style={styles.expenseItem} activeOpacity={0.7} onPress={handlePress}>
+      <TouchableOpacity
+        style={styles.expenseItem}
+        activeOpacity={0.7}
+        onPress={handlePress}
+      >
         <View style={styles.expenseContent}>
           <View style={styles.expenseRow}>
             <View style={styles.typeIconContainer}>
-              <Icon 
-                name={expense.type === 'FUEL' || expense.type === 'Fuel' ? 'fuel' : 'receipt'} 
-                size={20} 
-                color={expense.type === 'FUEL' || expense.type === 'Fuel' ? '#f59e0b' : '#8b5cf6'} 
+              <Icon
+                name={
+                  expense.type === "FUEL" || expense.type === "Fuel"
+                    ? "fuel"
+                    : "receipt"
+                }
+                size={20}
+                color={
+                  expense.type === "FUEL" || expense.type === "Fuel"
+                    ? "#f59e0b"
+                    : theme.colors.primary
+                }
               />
             </View>
-            
+
             <View style={styles.expenseMainInfo}>
               <View style={styles.expenseTopRow}>
-                <Text style={styles.expenseType}>{t(`expense.type.${expense.type.toLowerCase()}`)}</Text>
+                <Text style={styles.expenseType}>
+                  {expense.type}
+                  {/* {t(`expense.${expense.type?.toLowerCase()}`)} */}
+                </Text>
                 <Text style={styles.amountText}>
                   {formatCurrency(expense.amountFinal, expense.currency)}
                 </Text>
               </View>
               <View style={styles.expenseBottomRow}>
-                <Text style={styles.expenseDate}>{formatDisplayDate(expense.date)}</Text>
+                <Text style={styles.expenseDate}>
+                  {formatDisplayDate(expense.date)}
+                </Text>
                 <View style={styles.expenseIndicators}>
                   {expense.receiptUrl && (
-                    <Icon name="camera" size={12} color={theme.colors.textSecondary} />
+                    <Icon
+                      name="camera"
+                      size={12}
+                      color={theme.colors.textSecondary}
+                    />
                   )}
                   {isManual && (
                     <View style={styles.manualIndicator}>
@@ -229,8 +294,12 @@ const ExpensesListScreen: React.FC = () => {
                 </Text>
               )}
             </View>
-            
-            <Icon name="arrow-right" size={16} color={theme.colors.textSecondary} />
+
+            <Icon
+              name="arrow-right"
+              size={16}
+              color={theme.colors.textSecondary}
+            />
           </View>
         </View>
       </TouchableOpacity>
@@ -239,11 +308,11 @@ const ExpensesListScreen: React.FC = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateTitle}>{t('expenses.empty.title')}</Text>
+      <Text style={styles.emptyStateTitle}>{t("expenses.empty.title")}</Text>
       <Text style={styles.emptyStateText}>
         {filters.type
-          ? t('expenses.empty.filtered', { type: filters.type.toLowerCase() })
-          : t('expenses.empty.subtitle')}
+          ? t("expenses.empty.filtered", { type: filters.type.toLowerCase() })
+          : t("expenses.empty.subtitle")}
       </Text>
     </View>
   );
@@ -252,29 +321,43 @@ const ExpensesListScreen: React.FC = () => {
   const activeFiltersCount = getActiveFiltersCount();
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Icon name="search" size={16} color={theme.colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder={t('expenses.search')}
+            placeholder={t("expenses.search")}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor={theme.colors.textSecondary}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchButton}>
+            <TouchableOpacity
+              onPress={() => setSearchQuery("")}
+              style={styles.clearSearchButton}
+            >
               <Icon name="close" size={14} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity 
-          style={[styles.filterToggleButton, activeFiltersCount > 0 && styles.filterToggleButtonActive]}
+        <TouchableOpacity
+          style={[
+            styles.filterToggleButton,
+            activeFiltersCount > 0 && styles.filterToggleButtonActive,
+          ]}
           onPress={() => setShowFilters(true)}
         >
-          <Icon name="settings" size={16} color={activeFiltersCount > 0 ? theme.colors.surface : theme.colors.textSecondary} />
+          <Icon
+            name="settings"
+            size={16}
+            color={
+              activeFiltersCount > 0
+                ? theme.colors.surface
+                : theme.colors.textSecondary
+            }
+          />
           {activeFiltersCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFiltersCount}</Text>
@@ -285,38 +368,91 @@ const ExpensesListScreen: React.FC = () => {
 
       {/* Quick Filters */}
       <View style={styles.quickFiltersContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.quickFiltersScroll}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.quickFiltersScroll}
+        >
           <TouchableOpacity
-            style={[styles.quickFilterChip, !filters.type && styles.quickFilterChipActive]}
-            onPress={() => handleFilterChange('')}
+            style={[
+              styles.quickFilterChip,
+              !filters.type && styles.quickFilterChipActive,
+            ]}
+            onPress={() => handleFilterChange("")}
           >
-            <Text style={[styles.quickFilterText, !filters.type && styles.quickFilterTextActive]}>
-              {t('expenses.filter.allTypes')}
+            <Text
+              style={[
+                styles.quickFilterText,
+                !filters.type && styles.quickFilterTextActive,
+              ]}
+            >
+              {t("expenses.filter.allTypes")}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.quickFilterChip, filters.type === 'Fuel' && styles.quickFilterChipActive]}
-            onPress={() => handleFilterChange('Fuel')}
+            style={[
+              styles.quickFilterChip,
+              filters.type === "Fuel" && styles.quickFilterChipActive,
+            ]}
+            onPress={() => handleFilterChange("Fuel")}
           >
             <View style={styles.quickFilterContent}>
-              <Icon name="fuel" size={14} color={filters.type === 'Fuel' ? theme.colors.surface : theme.colors.textSecondary} />
-              <Text style={[styles.quickFilterText, filters.type === 'Fuel' && styles.quickFilterTextActive]}>Fuel</Text>
+              <Icon
+                name="fuel"
+                size={14}
+                color={
+                  filters.type === "Fuel"
+                    ? theme.colors.surface
+                    : theme.colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  filters.type === "Fuel" && styles.quickFilterTextActive,
+                ]}
+              >
+                {t("expense.fuel")}
+              </Text>
             </View>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.quickFilterChip, filters.type === 'Misc' && styles.quickFilterChipActive]}
-            onPress={() => handleFilterChange('Misc')}
+            style={[
+              styles.quickFilterChip,
+              filters.type === "Misc" && styles.quickFilterChipActive,
+            ]}
+            onPress={() => handleFilterChange("Misc")}
           >
             <View style={styles.quickFilterContent}>
-              <Icon name="target" size={14} color={filters.type === 'Misc' ? theme.colors.surface : theme.colors.textSecondary} />
-              <Text style={[styles.quickFilterText, filters.type === 'Misc' && styles.quickFilterTextActive]}>Misc</Text>
+              <Icon
+                name="target"
+                size={14}
+                color={
+                  filters.type === "Misc"
+                    ? theme.colors.surface
+                    : theme.colors.textSecondary
+                }
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  filters.type === "Misc" && styles.quickFilterTextActive,
+                ]}
+              >
+                {t("expense.misc")}
+              </Text>
             </View>
           </TouchableOpacity>
         </ScrollView>
-        
+
         {activeFiltersCount > 0 && (
-          <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
-            <Text style={styles.clearFiltersText}>Clear ({activeFiltersCount})</Text>
+          <TouchableOpacity
+            style={styles.clearFiltersButton}
+            onPress={clearFilters}
+          >
+            <Text style={styles.clearFiltersText}>
+              {t("expenses.filter.clear")} ({activeFiltersCount})
+            </Text>
           </TouchableOpacity>
         )}
       </View>
@@ -324,20 +460,31 @@ const ExpensesListScreen: React.FC = () => {
       {/* Results Summary */}
       <View style={styles.resultsContainer}>
         <Text style={styles.resultsText}>
-          {filteredExpenses.length} expense{filteredExpenses.length !== 1 ? 's' : ''} found
+          {filteredExpenses.length} expense
+          {filteredExpenses.length !== 1 ? "s" : ""} found
         </Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.sortButton}
           onPress={() => {
-            setFilters(prev => ({
+            setFilters((prev) => ({
               ...prev,
-              sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
+              sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
             }));
           }}
         >
           <View style={styles.sortButtonContent}>
             <Text style={styles.sortButtonText}>{filters.sortBy}</Text>
-            <Icon name={filters.sortOrder === 'asc' ? 'arrow-left' : 'arrow-right'} size={12} color={theme.colors.text} style={{ transform: [{ rotate: filters.sortOrder === 'asc' ? '-90deg' : '90deg' }] }} />
+            <Animated.View
+              style={{
+                transform: [{ rotate }], // Apply animated rotation
+              }}
+            >
+              <Icon
+                name="arrow-right" // You can keep this static or change based on the state
+                size={12}
+                color="black" // Adjust color as needed
+              />
+            </Animated.View>
           </View>
         </TouchableOpacity>
       </View>
@@ -378,31 +525,49 @@ const ExpensesListScreen: React.FC = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.filterModal}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Filters & Sort</Text>
-              <TouchableOpacity onPress={() => setShowFilters(false)} style={styles.modalCloseButton}>
+              <Text style={styles.modalTitle}>
+                {t("expenses.filter.filtersSort")}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowFilters(false)}
+                style={styles.modalCloseButton}
+              >
                 <Icon name="close" size={16} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
-            
+
             <ScrollView style={styles.modalContent}>
               {/* Date Range Filter */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Date Range</Text>
+                <Text style={styles.filterSectionTitle}>
+                  {t("expenses.filter.dateRange")}
+                </Text>
                 <View style={styles.filterOptions}>
-                  {['all', 'today', 'week', 'month', 'year'].map((range) => (
+                  {["all", "today", "week", "month", "year"].map((range) => (
                     <TouchableOpacity
                       key={range}
                       style={[
                         styles.filterOption,
-                        filters.dateRange === range && styles.filterOptionActive
+                        filters.dateRange === range &&
+                          styles.filterOptionActive,
                       ]}
-                      onPress={() => setFilters(prev => ({ ...prev, dateRange: range as any }))}
+                      onPress={() =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          dateRange: range as any,
+                        }))
+                      }
                     >
-                      <Text style={[
-                        styles.filterOptionText,
-                        filters.dateRange === range && styles.filterOptionTextActive
-                      ]}>
-                        {range === 'all' ? 'All Time' : range.charAt(0).toUpperCase() + range.slice(1)}
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          filters.dateRange === range &&
+                            styles.filterOptionTextActive,
+                        ]}
+                      >
+                        {range === "all"
+                          ? "All Time"
+                          : range.charAt(0).toUpperCase() + range.slice(1)}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -411,25 +576,36 @@ const ExpensesListScreen: React.FC = () => {
 
               {/* Sort Options */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Sort By</Text>
+                <Text style={styles.filterSectionTitle}>
+                  {t("expenses.filter.sortBy")}
+                </Text>
                 <View style={styles.filterOptions}>
                   {[
-                    { key: 'date', label: 'Date' },
-                    { key: 'amount', label: 'Amount' },
-                    { key: 'merchant', label: 'Merchant' }
+                    { key: "date", label: "Date" },
+                    { key: "amount", label: "Amount" },
+                    { key: "merchant", label: "Merchant" },
                   ].map((option) => (
                     <TouchableOpacity
                       key={option.key}
                       style={[
                         styles.filterOption,
-                        filters.sortBy === option.key && styles.filterOptionActive
+                        filters.sortBy === option.key &&
+                          styles.filterOptionActive,
                       ]}
-                      onPress={() => setFilters(prev => ({ ...prev, sortBy: option.key as any }))}
+                      onPress={() =>
+                        setFilters((prev) => ({
+                          ...prev,
+                          sortBy: option.key as any,
+                        }))
+                      }
                     >
-                      <Text style={[
-                        styles.filterOptionText,
-                        filters.sortBy === option.key && styles.filterOptionTextActive
-                      ]}>
+                      <Text
+                        style={[
+                          styles.filterOptionText,
+                          filters.sortBy === option.key &&
+                            styles.filterOptionTextActive,
+                        ]}
+                      >
                         {option.label}
                       </Text>
                     </TouchableOpacity>
@@ -439,33 +615,45 @@ const ExpensesListScreen: React.FC = () => {
 
               {/* Sort Order */}
               <View style={styles.filterSection}>
-                <Text style={styles.filterSectionTitle}>Sort Order</Text>
+                <Text style={styles.filterSectionTitle}>
+                  {t("expenses.filter.sortOrder")}
+                </Text>
                 <View style={styles.filterOptions}>
                   <TouchableOpacity
                     style={[
                       styles.filterOption,
-                      filters.sortOrder === 'desc' && styles.filterOptionActive
+                      filters.sortOrder === "desc" && styles.filterOptionActive,
                     ]}
-                    onPress={() => setFilters(prev => ({ ...prev, sortOrder: 'desc' }))}
+                    onPress={() =>
+                      setFilters((prev) => ({ ...prev, sortOrder: "desc" }))
+                    }
                   >
-                    <Text style={[
-                      styles.filterOptionText,
-                      filters.sortOrder === 'desc' && styles.filterOptionTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        filters.sortOrder === "desc" &&
+                          styles.filterOptionTextActive,
+                      ]}
+                    >
                       Newest First
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
                       styles.filterOption,
-                      filters.sortOrder === 'asc' && styles.filterOptionActive
+                      filters.sortOrder === "asc" && styles.filterOptionActive,
                     ]}
-                    onPress={() => setFilters(prev => ({ ...prev, sortOrder: 'asc' }))}
+                    onPress={() =>
+                      setFilters((prev) => ({ ...prev, sortOrder: "asc" }))
+                    }
                   >
-                    <Text style={[
-                      styles.filterOptionText,
-                      filters.sortOrder === 'asc' && styles.filterOptionTextActive
-                    ]}>
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        filters.sortOrder === "asc" &&
+                          styles.filterOptionTextActive,
+                      ]}
+                    >
                       Oldest First
                     </Text>
                   </TouchableOpacity>
@@ -474,14 +662,21 @@ const ExpensesListScreen: React.FC = () => {
             </ScrollView>
 
             <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.clearAllButton} onPress={clearFilters}>
-                <Text style={styles.clearAllButtonText}>Clear All</Text>
+              <TouchableOpacity
+                style={styles.clearAllButton}
+                onPress={clearFilters}
+              >
+                <Text style={styles.clearAllButtonText}>
+                  {t("expenses.filter.clearAll")}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.applyButton} 
+              <TouchableOpacity
+                style={styles.applyButton}
                 onPress={() => setShowFilters(false)}
               >
-                <Text style={styles.applyButtonText}>Apply Filters</Text>
+                <Text style={styles.applyButtonText}>
+                  {t("expenses.filter.apply")}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -503,21 +698,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  
+
   // Search Bar Styles
   searchContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: theme.spacing.md,
     backgroundColor: theme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
-    alignItems: 'center',
+    alignItems: "center",
     gap: theme.spacing.sm,
   },
   searchInputContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.background,
     borderRadius: theme.borderRadius.medium,
     paddingHorizontal: theme.spacing.md,
@@ -544,13 +739,13 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
   },
   quickFilterContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   sortButtonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   filterToggleButton: {
@@ -560,9 +755,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
   },
   filterToggleButtonActive: {
     backgroundColor: theme.colors.primary,
@@ -572,26 +767,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   filterBadge: {
-    position: 'absolute',
+    position: "absolute",
     top: -6,
     right: -6,
     backgroundColor: theme.colors.error,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   filterBadgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.surface,
   },
-  
+
   // Quick Filters
   quickFiltersContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     backgroundColor: theme.colors.surface,
@@ -616,7 +811,7 @@ const styles = StyleSheet.create({
   },
   quickFilterText: {
     fontSize: theme.fontSize.small,
-    fontWeight: '500',
+    fontWeight: "500",
     color: theme.colors.text,
   },
   quickFilterTextActive: {
@@ -629,14 +824,14 @@ const styles = StyleSheet.create({
   clearFiltersText: {
     fontSize: theme.fontSize.small,
     color: theme.colors.error,
-    fontWeight: '500',
+    fontWeight: "500",
   },
-  
+
   // Results Summary
   resultsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     backgroundColor: theme.colors.surface,
@@ -646,7 +841,7 @@ const styles = StyleSheet.create({
   resultsText: {
     fontSize: theme.fontSize.small,
     color: theme.colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   sortButton: {
     paddingHorizontal: theme.spacing.sm,
@@ -657,9 +852,9 @@ const styles = StyleSheet.create({
   sortButtonText: {
     fontSize: theme.fontSize.small,
     color: theme.colors.text,
-    fontWeight: '500',
+    fontWeight: "500",
   },
-  
+
   // Expense List
   listContainer: {
     paddingVertical: theme.spacing.sm,
@@ -670,7 +865,7 @@ const styles = StyleSheet.create({
     marginVertical: theme.spacing.xs,
     borderRadius: theme.borderRadius.medium,
     elevation: 1,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.18,
     shadowRadius: 1.0,
@@ -679,8 +874,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   expenseRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: theme.spacing.md,
   },
   typeIconContainer: {
@@ -688,26 +883,26 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   expenseMainInfo: {
     flex: 1,
   },
   expenseTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: theme.spacing.xs,
   },
   expenseBottomRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   expenseType: {
     fontSize: theme.fontSize.body,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.text,
   },
   expenseDate: {
@@ -716,7 +911,7 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontSize: theme.fontSize.body,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: theme.colors.primary,
   },
   merchantText: {
@@ -725,8 +920,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   expenseIndicators: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: theme.spacing.xs,
   },
   manualIndicator: {
@@ -734,59 +929,59 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     backgroundColor: theme.colors.warning,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   manualIndicatorText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.surface,
   },
   emptyState: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: theme.spacing.xl,
   },
   emptyStateTitle: {
     fontSize: theme.fontSize.title,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.text,
     marginBottom: theme.spacing.sm,
   },
   emptyStateText: {
     fontSize: theme.fontSize.body,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 22,
   },
   loader: {
     paddingVertical: theme.spacing.lg,
   },
-  
+
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   filterModal: {
     backgroundColor: theme.colors.surface,
     borderTopLeftRadius: theme.borderRadius.large,
     borderTopRightRadius: theme.borderRadius.large,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
   },
   modalTitle: {
     fontSize: theme.fontSize.title,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.text,
   },
   modalCloseButton: {
@@ -794,8 +989,8 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     backgroundColor: theme.colors.border,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalCloseText: {
     fontSize: 16,
@@ -811,13 +1006,13 @@ const styles = StyleSheet.create({
   },
   filterSectionTitle: {
     fontSize: theme.fontSize.body,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
   },
   filterOptions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: theme.spacing.sm,
   },
   filterOption: {
@@ -834,14 +1029,14 @@ const styles = StyleSheet.create({
   },
   filterOptionText: {
     fontSize: theme.fontSize.small,
-    fontWeight: '500',
+    fontWeight: "500",
     color: theme.colors.text,
   },
   filterOptionTextActive: {
     color: theme.colors.surface,
   },
   modalActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: theme.spacing.lg,
     gap: theme.spacing.md,
   },
@@ -852,11 +1047,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.background,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    alignItems: 'center',
+    alignItems: "center",
   },
   clearAllButtonText: {
     fontSize: theme.fontSize.body,
-    fontWeight: '500',
+    fontWeight: "500",
     color: theme.colors.text,
   },
   applyButton: {
@@ -864,11 +1059,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.medium,
     backgroundColor: theme.colors.primary,
-    alignItems: 'center',
+    alignItems: "center",
   },
   applyButtonText: {
     fontSize: theme.fontSize.body,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.surface,
   },
 });
