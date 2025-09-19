@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,27 +22,38 @@ import { formatCurrency } from '../../utils/currency';
 import { formatDisplayDate } from '../../utils/date';
 import RNFS from 'react-native-fs';
 
+
 type UploadReceiptScreenProps = {
-  navigation: StackNavigationProp<CreateStackParamList, 'UploadReceipt'>;
+  navigation: StackNavigationProp<CreateStackParamList, "UploadReceipt">;
 };
 
-const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation }) => {
+const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
+  navigation,
+}) => {
+  const { t } = useTranslation();
   const { updateForm, resetForm, setOCRResult } = useExpense();
-  const [selectedImageUri, setSelectedImageUri] = useState<string>('');
+  const [selectedImageUri, setSelectedImageUri] = useState<string>("");
   const [processingOCR, setProcessingOCR] = useState(false);
   const [ocrResult, setOcrResult] = useState<ExpenseDetails | null>(null);
-  const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: "success" | "error" | "info";
+  }>({
     visible: false,
-    message: '',
-    type: 'info',
+    message: "",
+    type: "info",
   });
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "info"
+  ) => {
     setToast({ visible: true, message, type });
   };
 
   const hideToast = () => {
-    setToast({ visible: false, message: '', type: 'info' });
+    setToast({ visible: false, message: "", type: "info" });
   };
 
   React.useEffect(() => {
@@ -51,54 +63,57 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
   const handleImageSelected = async (uri: string) => {
     setSelectedImageUri(uri);
     setOcrResult(null);
-    
+
     // Start OCR processing immediately after image selection
     await processOCR(uri);
   };
 
   const processOCR = async (imageUri: string) => {
     setProcessingOCR(true);
-    showToast('Analyzing receipt with OCR...', 'info');
+    showToast(t("upload.analyzingWithOCR"), "info");
 
     try {
-      console.log('Starting OCR processing for image:', imageUri);
-      
+      console.log("Starting OCR processing for image:", imageUri);
+
       // Convert image to base64
       const base64 = await convertImageToBase64(imageUri);
-      console.log('Image converted to base64, length:', base64.length);
-      
+      console.log("Image converted to base64, length:", base64.length);
+
       // Process with OCR service
       const response = await ocrService.analyzeReceipt(base64);
-      console.log('OCR response:', response);
-      
+      console.log("OCR response:", response);
+
       if (response.success && response.data) {
         setOcrResult(response.data);
-        
+
         // Update form with OCR results
         if (response.data.amount) {
           setOCRResult(response.data.amount, response.data.amount);
         }
-        
+
         // Map OCR category to backend format
         const mapCategory = (category?: string): string | undefined => {
           if (!category) return undefined;
           const cat = category.toLowerCase();
-          if (cat.includes('toll')) return 'TOLL';
-          if (cat.includes('parking')) return 'PARKING'; 
-          if (cat.includes('repair') || cat.includes('maintenance')) return 'REPAIR';
-          return 'OTHER';
+          if (cat.includes("toll")) return "TOLL";
+          if (cat.includes("parking")) return "PARKING";
+          if (cat.includes("repair") || cat.includes("maintenance"))
+            return "REPAIR";
+          return "OTHER";
         };
 
         // Update form with all extracted data
         // Convert date to German format (DD.MM.YYYY)
-        const dateToUse = response.data.date ? 
-          formatDisplayDate(response.data.date) : 
-          formatDisplayDate(new Date().toISOString());
-        
+        const dateToUse = response.data.date
+          ? formatDisplayDate(response.data.date)
+          : formatDisplayDate(new Date().toISOString());
+
         updateForm({
-          type: response.data.type === 'FUEL' ? 'Fuel' : 'Misc',
+          type: response.data.type === "FUEL" ? "Fuel" : "Misc",
           amountFinal: response.data.amount || 0,
+
           currency: response.data.currency || 'EUR',
+
           date: dateToUse,
           category: mapCategory(response.data.category),
           merchant: response.data.merchant,
@@ -106,16 +121,22 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
         });
 
         const amount = response.data.amount || 0;
+
         const currency = response.data.currency || 'EUR';
         showToast(`OCR detected: ${formatCurrency(amount, currency)}`, 'success');
+
       } else {
-        console.log('OCR failed or no data detected:', response.error);
-        showToast(response.error || 'OCR processing completed, but no details detected', 'info');
+        console.log("OCR failed or no data detected:", response.error);
+        showToast(
+          response.error || "OCR processing completed, but no details detected",
+          "info"
+        );
       }
     } catch (error) {
-      console.error('OCR processing error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      showToast(`OCR processing failed: ${errorMessage}`, 'error');
+      console.error("OCR processing error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      showToast(`OCR processing failed: ${errorMessage}`, "error");
     } finally {
       setProcessingOCR(false);
     }
@@ -124,31 +145,33 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
   const convertImageToBase64 = async (imageUri: string): Promise<string> => {
     try {
       // Clean the URI - remove 'file://' prefix if present
-      const cleanUri = imageUri.replace('file://', '');
-      
+      const cleanUri = imageUri.replace("file://", "");
+
       // Use react-native-fs to read the file as base64
-      const base64 = await RNFS.readFile(cleanUri, 'base64');
+      const base64 = await RNFS.readFile(cleanUri, "base64");
       return base64;
     } catch (error) {
-      console.error('Error converting image to base64:', error);
-      throw new Error('Failed to convert image to base64');
+      console.error("Error converting image to base64:", error);
+      throw new Error("Failed to convert image to base64");
     }
   };
 
   const handleContinue = () => {
     // Continue to expense form with or without receipt
-    navigation.navigate('ExpenseForm', { receiptUrl: selectedImageUri || '' });
+    // setSelectedImageUri("");
+    navigation.navigate("ExpenseForm", {
+      receiptUrl: selectedImageUri || "",
+      setSelectedImageUri: setSelectedImageUri,
+    });
   };
 
-
-
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.content}>
-          <Text style={styles.title}>Upload Receipt</Text>
+          <Text style={styles.title}>{t("upload.uploadReceipt")}</Text>
           <Text style={styles.description}>
-            Take a photo or select an image of your receipt. We'll extract the information automatically using OCR.
+            {t("upload.uploadInstruction")}
           </Text>
 
           {/* Multi-Upload Button */}
@@ -172,43 +195,60 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
               <View style={styles.ocrProcessingContent}>
                 <ActivityIndicator size="small" color={theme.colors.primary} />
                 <Icon name="search" size={20} color={theme.colors.primary} />
-                <Text style={styles.ocrProcessingText}>Analyzing receipt with AI...</Text>
+                <Text style={styles.ocrProcessingText}>
+                  {t("upload.analyzing")}
+                </Text>
               </View>
             </View>
           )}
 
           {/* OCR Results */}
-          {ocrResult && !processingOCR && (
+          {ocrResult && selectedImageUri && !processingOCR && (
             <View style={styles.ocrResultsContainer}>
               <View style={styles.ocrResultsHeader}>
                 <Icon name="check" size={20} color={theme.colors.success} />
-                <Text style={styles.ocrResultsTitle}>Details Extracted</Text>
+                <Text style={styles.ocrResultsTitle}>
+                  {t("upload.detailsExtracted")}
+                </Text>
               </View>
               <View style={styles.ocrResultsContent}>
                 {ocrResult.amount && (
                   <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>Amount:</Text>
+                    <Text style={styles.ocrResultLabel}>
+                      {t("upload.amount")}:
+                    </Text>
                     <Text style={styles.ocrResultValue}>
+
                       {formatCurrency(ocrResult.amount, ocrResult.currency || 'EUR')}
                     </Text>
                   </View>
                 )}
                 {ocrResult.merchant && (
                   <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>Merchant:</Text>
-                    <Text style={styles.ocrResultValue}>{ocrResult.merchant}</Text>
+                    <Text style={styles.ocrResultLabel}>
+                      {t("upload.merchant")}:
+                    </Text>
+                    <Text style={styles.ocrResultValue}>
+                      {ocrResult.merchant}
+                    </Text>
                   </View>
                 )}
                 {ocrResult.type && (
                   <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>Type:</Text>
+                    <Text style={styles.ocrResultLabel}>
+                      {t("upload.type")}:
+                    </Text>
                     <Text style={styles.ocrResultValue}>{ocrResult.type}</Text>
                   </View>
                 )}
                 {ocrResult.category && (
                   <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>Category:</Text>
-                    <Text style={styles.ocrResultValue}>{ocrResult.category}</Text>
+                    <Text style={styles.ocrResultLabel}>
+                      {t("upload.category")}:
+                    </Text>
+                    <Text style={styles.ocrResultValue}>
+                      {ocrResult.category}
+                    </Text>
                   </View>
                 )}
               </View>
@@ -217,16 +257,14 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
 
           <View style={styles.buttonContainer}>
             <Button
-              title="Continue"
+              title={t("common.continue")}
               onPress={handleContinue}
               disabled={!selectedImageUri || processingOCR}
               style={styles.primaryButton}
             />
           </View>
 
-          <Text style={styles.note}>
-            💡 Tip: For best OCR results, ensure the receipt is well-lit and the text is clearly visible.
-          </Text>
+          <Text style={styles.note}>💡 {t("upload.tip")}</Text>
         </View>
       </ScrollView>
 
@@ -253,7 +291,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: theme.fontSize.heading,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: theme.colors.text,
     marginBottom: theme.spacing.md,
   },
@@ -278,8 +316,8 @@ const styles = StyleSheet.create({
   note: {
     fontSize: theme.fontSize.small,
     color: theme.colors.textSecondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
+    textAlign: "center",
+    fontStyle: "italic",
     backgroundColor: theme.colors.surface,
     padding: theme.spacing.md,
     borderRadius: theme.borderRadius.medium,
@@ -293,15 +331,15 @@ const styles = StyleSheet.create({
     borderLeftColor: theme.colors.primary,
   },
   ocrProcessingContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: theme.spacing.sm,
   },
   ocrProcessingText: {
     fontSize: theme.fontSize.body,
     color: theme.colors.primary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   ocrResultsContainer: {
     backgroundColor: theme.colors.surface,
@@ -312,37 +350,37 @@ const styles = StyleSheet.create({
     borderLeftColor: theme.colors.success,
   },
   ocrResultsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
   ocrResultsTitle: {
     fontSize: theme.fontSize.body,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.success,
   },
   ocrResultsContent: {
     gap: theme.spacing.sm,
   },
   ocrResultRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: theme.spacing.xs,
   },
   ocrResultLabel: {
     fontSize: theme.fontSize.small,
     color: theme.colors.textSecondary,
-    fontWeight: '500',
+    fontWeight: "500",
     flex: 1,
   },
   ocrResultValue: {
     fontSize: theme.fontSize.small,
     color: theme.colors.text,
-    fontWeight: '600',
+    fontWeight: "600",
     flex: 2,
-    textAlign: 'right',
+    textAlign: "right",
   },
   multiUploadButton: {
     flexDirection: 'row',

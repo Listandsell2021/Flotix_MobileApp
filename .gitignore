@@ -75,6 +75,7 @@ web-build/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.d.ts
 
 # Debug
 npm-debug.log*

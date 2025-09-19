@@ -1,5 +1,6 @@
 export const theme = {
   colors: {
+
     primary: '#0ea5e9',
     secondary: '#5856D6',
     background: '#F2F2F7',
@@ -11,6 +12,7 @@ export const theme = {
     error: '#FF3B30',
     success: '#34C759',
     warning: '#FF9500',
+
   },
   spacing: {
     xs: 4,

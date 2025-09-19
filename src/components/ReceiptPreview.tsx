@@ -1,7 +1,16 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { theme } from '../styles/theme';
-import Icon from './Icon';
+import React from "react";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+} from "react-native";
+import { theme } from "../styles/theme";
+import Icon from "./Icon";
+import { useTranslation } from "react-i18next";
 
 interface ReceiptPreviewProps {
   uri: string;
@@ -16,18 +25,27 @@ interface ReceiptModalProps {
   onClose: () => void;
 }
 
-const ReceiptModal: React.FC<ReceiptModalProps> = ({ visible, uri, onClose }) => {
+const ReceiptModal: React.FC<ReceiptModalProps> = ({
+  visible,
+  uri,
+  onClose,
+}) => {
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.modalContainer}>
         <TouchableOpacity style={styles.modalOverlay} onPress={onClose} />
         <View style={styles.modalContent}>
-          <ScrollView 
+          <ScrollView
             contentContainerStyle={styles.scrollContainer}
             maximumZoomScale={3}
             minimumZoomScale={1}
           >
-            <Image source={{ uri }} style={styles.fullImage} resizeMode="contain" />
+            <Text>hihaisdhf alsdfjlj l</Text>
+            <Image
+              source={{ uri }}
+              style={styles.fullImage}
+              resizeMode="contain"
+            />
           </ScrollView>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Icon name="close" size={18} color={theme.colors.surface} />
@@ -38,12 +56,13 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ visible, uri, onClose }) =>
   );
 };
 
-const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({ 
-  uri, 
-  onPress, 
+const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
+  uri,
+  onPress,
   style,
-  showFullSize = false 
+  showFullSize = false,
 }) => {
+  const { t } = useTranslation();
   const [showModal, setShowModal] = React.useState(false);
 
   const handlePress = () => {
@@ -56,24 +75,24 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
 
   return (
     <>
-      <TouchableOpacity 
-        style={[styles.container, style]} 
+      <TouchableOpacity
+        style={[styles.container, style]}
         onPress={handlePress}
         activeOpacity={0.8}
       >
         <Image source={{ uri }} style={styles.image} />
         {showFullSize && (
           <View style={styles.overlay}>
-            <Text style={styles.overlayText}>Tap to view full size</Text>
+            <Text style={styles.overlayText}>{t("upload.tapToView")}</Text>
           </View>
         )}
       </TouchableOpacity>
 
       {showFullSize && (
-        <ReceiptModal 
-          visible={showModal} 
-          uri={uri} 
-          onClose={() => setShowModal(false)} 
+        <ReceiptModal
+          visible={showModal}
+          uri={uri}
+          onClose={() => setShowModal(false)}
         />
       )}
     </>
@@ -83,10 +102,10 @@ const ReceiptPreview: React.FC<ReceiptPreviewProps> = ({
 const styles = StyleSheet.create({
   container: {
     borderRadius: theme.borderRadius.medium,
-    overflow: 'hidden',
+    overflow: "hidden",
     backgroundColor: theme.colors.surface,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -95,31 +114,31 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 120,
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     paddingVertical: theme.spacing.xs,
-    alignItems: 'center',
+    alignItems: "center",
   },
   overlayText: {
     color: theme.colors.surface,
     fontSize: theme.fontSize.small,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
@@ -127,36 +146,36 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: "100%",
+    // justifyContent: "center",
+    // alignItems: "center",
     paddingVertical: theme.spacing.xl,
   },
   scrollContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   fullImage: {
-    width: '90%',
-    height: '100%',
+    width: "90%",
+    height: "100%",
     maxHeight: 600,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 50,
     right: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 20,
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   closeButtonText: {
     color: theme.colors.surface,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
 

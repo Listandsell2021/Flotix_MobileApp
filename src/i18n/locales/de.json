@@ -36,7 +36,9 @@
     "loginSuccess": "Anmeldung erfolgreich",
     "sessionExpired": "Sitzung abgelaufen. Bitte melden Sie sich erneut an.",
     "logoutConfirm": "Möchten Sie sich wirklich abmelden?",
-    "logoutSuccess": "Erfolgreich abgemeldet"
+    "logoutSuccess": "Erfolgreich abgemeldet",
+    "contactAdminForAccount": "Wenden Sie sich an Ihren Administrator, wenn Sie kein Konto haben.",
+    "loginInstruction": "Bitte verwenden Sie Ihre Anmeldedaten, um sich anzumelden."
   },
   "app": {
     "name": "Flotix",
@@ -100,7 +102,9 @@
     "notFound": "Ausgabe nicht gefunden",
     "loadingDetails": "Ausgabendetails werden geladen...",
     "deleteConfirm": "Ausgabe löschen",
-    "deleteMessage": "Möchten Sie diese Ausgabe wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
+    "deleteMessage": "Möchten Sie diese Ausgabe wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "location": "Standort",
+    "currentOdometer": "aktueller Kilometerzähler"
   },
   "expenses": {
     "title": "Ausgaben",
@@ -182,7 +186,9 @@
     "captureOrSelect": "Fotografieren oder wählen Sie ein Foto Ihres Belegs",
     "expenseDetailsExtracted": "Ausgabendetails extrahiert",
     "uploading": "Beleg wird hochgeladen...",
-    "uploaded": "Beleg hochgeladen"
+    "uploaded": "Beleg hochgeladen",
+    "uploadInstruction": "Machen Sie ein Foto oder wählen Sie ein Bild Ihres Belegs aus. Wir extrahieren die Informationen automatisch per OCR.",
+    "tip": "Tipp: Um optimale OCR-Ergebnisse zu erzielen, stellen Sie sicher, dass der Beleg gut beleuchtet und der Text deutlich sichtbar ist."
   },
   "profile": {
     "title": "Profil",
@@ -239,7 +245,8 @@
     "history": "Verlauf",
     "createExpense": "Ausgabe erstellen",
     "expenseDetails": "Ausgabendetails",
-    "uploadReceipt": "Beleg hochladen"
+    "uploadReceipt": "Beleg hochladen",
+    "expenseHistory": "Ausgabenhistorie"
   },
   "form": {
     "storeName": "Geschäftsname",
