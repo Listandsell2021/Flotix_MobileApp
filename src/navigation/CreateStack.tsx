@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import { useTranslation } from "react-i18next";
 import UploadReceiptScreen from '../screens/Create/UploadReceiptScreen';
 import ExpenseFormScreen from '../screens/Create/ExpenseFormScreen';
 import MultiUploadScreen from '../screens/Create/MultiUploadScreen';

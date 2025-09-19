@@ -37,7 +37,7 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
   const navigation = useNavigation<any>();
   const { state, addExpense, setLoading, setError, resetForm } = useExpense();
   const { state: authState } = useAuth();
-  const { receiptUrl, setSelectedImageUri } = route.params;
+  const { receiptUrl } = route.params;
 
   // Get the vehicle's current odometer from driver data
   const vehicleOdometer =
@@ -225,19 +225,14 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
         expenseData.date = new Date(dateISO).toISOString();
       }
 
-      // Add currency if not default
-
-      if (formData.currency && formData.currency !== 'EUR') {
-
-        expenseData.currency = formData.currency.toUpperCase();
-      }
+      // Add currency (always required by backend)
+      expenseData.currency = formData.currency ? formData.currency.toUpperCase() : 'EUR';
 
       console.log("Creating expense with data:", expenseData);
       const newExpense = await expensesApi.create(expenseData);
       addExpense(newExpense);
 
       showToast(t("success.expenseCreated"), "success");
-      setSelectedImageUri("");
       resetForm();
       setTimeout(() => {
         navigation.reset({

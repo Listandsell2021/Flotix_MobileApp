@@ -14,7 +14,7 @@ import "./src/i18n/index"; // Initialize i18n
 import { AuthProvider } from "./src/state/authSlice";
 import { ExpenseProvider } from "./src/state/expenseSlice";
 import Navigation from "./src/navigation";
-import { request, PERMISSIONS, RESULTS } from "react-native-permissions";
+import { request, PERMISSIONS } from "react-native-permissions";
 
 
 function App(): React.JSX.Element {
@@ -27,8 +27,7 @@ function App(): React.JSX.Element {
           PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
         );
 
-        console.log("Camera:", cameraStatus);
-        console.log("Read Media Images:", imagesStatus);
+        // Camera and Read Media Images permissions requested
 
         // WRITE_EXTERNAL_STORAGE is deprecated on Android 13+
       } else {
@@ -41,17 +40,14 @@ function App(): React.JSX.Element {
           PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE
         );
 
-        console.log("Camera:", cameraStatus);
-        console.log("Read External Storage:", readStorageStatus);
-        console.log("Write External Storage:", writeStorageStatus);
+        // Camera and Storage permissions requested
       }
     } else if (Platform.OS === "ios") {
       const cameraStatus = await request(PERMISSIONS.IOS.CAMERA);
       const photoLibraryStatus = await request(PERMISSIONS.IOS.PHOTO_LIBRARY);
       // For iOS 14+, you can also request PHOTO_LIBRARY_ADD_ONLY if needed
 
-      console.log("Camera:", cameraStatus);
-      console.log("Photo Library:", photoLibraryStatus);
+      // Camera and Photo Library permissions requested
     }
   }
 

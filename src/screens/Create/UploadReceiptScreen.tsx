@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from "react-i18next";
 import { CreateStackParamList } from '../../navigation/CreateStack';
 import { theme } from '../../styles/theme';
 import { useExpense } from '../../state/expenseSlice';
@@ -161,7 +162,6 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
     // setSelectedImageUri("");
     navigation.navigate("ExpenseForm", {
       receiptUrl: selectedImageUri || "",
-      setSelectedImageUri: setSelectedImageUri,
     });
   };
 

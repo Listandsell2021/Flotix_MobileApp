@@ -2,6 +2,9 @@
 // For development, you can set your OpenAI API key here
 // In production, this should come from secure environment variables
 
+// Import API key from environment
+import { API_KEY } from '@env';
+
 export const OCR_CONFIG = {
   // Set to true to enable real OCR with OpenAI
   useRealOCR: true,
@@ -9,7 +12,7 @@ export const OCR_CONFIG = {
   // Add your OpenAI API key here for development testing
   // Get your key from: https://platform.openai.com/api-keys
   // IMPORTANT: Never commit real API keys to version control!
-  // openAIApiKey: '', 
+  openAIApiKey: API_KEY || '',
 
   // Model to use for OCR (gpt-4o or gpt-4o-mini)
   model: 'gpt-4o-mini',
@@ -18,7 +21,7 @@ export const OCR_CONFIG = {
   backendOCRUrl: '/api/ocr/analyze',
 
   // Use backend instead of direct OpenAI calls
-  preferBackend: true,
+  preferBackend: false, // Set to false to use direct OpenAI API
 };
 
 // Mock data generator for development
