@@ -5,21 +5,23 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { StackNavigationProp } from "@react-navigation/stack";
-import { CreateStackParamList } from "../../navigation/CreateStack";
-import { theme } from "../../styles/theme";
-import { useExpense } from "../../state/expenseSlice";
-import ImagePicker from "../../components/ImagePicker";
-import Button from "../../components/Button";
-import Toast from "../../components/Toast";
-import Icon from "../../components/Icon";
-import { ocrService, ExpenseDetails } from "../../services/ocrService";
-import { formatCurrency } from "../../utils/currency";
-import { formatDisplayDate } from "../../utils/date";
-import RNFS from "react-native-fs";
-import { useTranslation } from "react-i18next";
+
+  TouchableOpacity,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { CreateStackParamList } from '../../navigation/CreateStack';
+import { theme } from '../../styles/theme';
+import { useExpense } from '../../state/expenseSlice';
+import ImagePicker from '../../components/ImagePicker';
+import Button from '../../components/Button';
+import Toast from '../../components/Toast';
+import Icon from '../../components/Icon';
+import { ocrService, ExpenseDetails } from '../../services/ocrService';
+import { formatCurrency } from '../../utils/currency';
+import { formatDisplayDate } from '../../utils/date';
+import RNFS from 'react-native-fs';
+
 
 type UploadReceiptScreenProps = {
   navigation: StackNavigationProp<CreateStackParamList, "UploadReceipt">;
@@ -109,7 +111,9 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
         updateForm({
           type: response.data.type === "FUEL" ? "Fuel" : "Misc",
           amountFinal: response.data.amount || 0,
-          currency: response.data.currency || "USD",
+
+          currency: response.data.currency || 'EUR',
+
           date: dateToUse,
           category: mapCategory(response.data.category),
           merchant: response.data.merchant,
@@ -117,11 +121,10 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
         });
 
         const amount = response.data.amount || 0;
-        const currency = response.data.currency || "USD";
-        showToast(
-          `OCR detected: ${formatCurrency(amount, currency)}`,
-          "success"
-        );
+
+        const currency = response.data.currency || 'EUR';
+        showToast(`OCR detected: ${formatCurrency(amount, currency)}`, 'success');
+
       } else {
         console.log("OCR failed or no data detected:", response.error);
         showToast(
@@ -171,6 +174,16 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
             {t("upload.uploadInstruction")}
           </Text>
 
+          {/* Multi-Upload Button */}
+          <TouchableOpacity
+            style={styles.multiUploadButton}
+            onPress={() => navigation.navigate('MultiUpload')}
+          >
+            <Icon name="stack" size={20} color={theme.colors.primary} />
+            <Text style={styles.multiUploadButtonText}>Multi-Receipt Upload</Text>
+            <Icon name="chevron-right" size={16} color={theme.colors.primary} />
+          </TouchableOpacity>
+
           <ImagePicker
             onImageSelected={handleImageSelected}
             selectedImageUri={selectedImageUri}
@@ -205,10 +218,8 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
                       {t("upload.amount")}:
                     </Text>
                     <Text style={styles.ocrResultValue}>
-                      {formatCurrency(
-                        ocrResult.amount,
-                        ocrResult.currency || "USD"
-                      )}
+
+                      {formatCurrency(ocrResult.amount, ocrResult.currency || 'EUR')}
                     </Text>
                   </View>
                 )}
@@ -370,6 +381,30 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     flex: 2,
     textAlign: "right",
+  },
+  multiUploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.medium,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '20',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  multiUploadButtonText: {
+    flex: 1,
+    fontSize: theme.fontSize.body,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginLeft: theme.spacing.md,
   },
 });
 

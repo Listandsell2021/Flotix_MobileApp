@@ -24,7 +24,7 @@ import Toast from "../../components/Toast";
 import Icon from "../../components/Icon";
 
 const ExpensesListScreen: React.FC = () => {
-  const { t } = useTranslation();
+    const { t } = useTranslation();
   const { state, setExpenses, setLoading, setError } = useExpense();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
@@ -96,9 +96,11 @@ const ExpensesListScreen: React.FC = () => {
       const response = await expensesApi.getList(params);
       setExpenses(response.items);
     } catch (error) {
+
       console.error("Load expenses error:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("errors.loadExpenses");
+
       setError(errorMessage);
       showToast(errorMessage, "error");
     } finally {
@@ -261,10 +263,12 @@ const ExpensesListScreen: React.FC = () => {
 
             <View style={styles.expenseMainInfo}>
               <View style={styles.expenseTopRow}>
+
                 <Text style={styles.expenseType}>
                   {expense.type}
                   {/* {t(`expense.${expense.type?.toLowerCase()}`)} */}
                 </Text>
+
                 <Text style={styles.amountText}>
                   {formatCurrency(expense.amountFinal, expense.currency)}
                 </Text>
@@ -308,11 +312,14 @@ const ExpensesListScreen: React.FC = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={styles.emptyStateTitle}>{t("expenses.empty.title")}</Text>
+
+     <Text style={styles.emptyStateTitle}>{t('expenses.empty.title')}</Text>
       <Text style={styles.emptyStateText}>
         {filters.type
-          ? t("expenses.empty.filtered", { type: filters.type.toLowerCase() })
-          : t("expenses.empty.subtitle")}
+            ? t('expenses.empty.filtered', { type: filters.type.toLowerCase() })
+          : t('expenses.empty.subtitle')}
+
+     
       </Text>
     </View>
   );
@@ -380,6 +387,7 @@ const ExpensesListScreen: React.FC = () => {
             ]}
             onPress={() => handleFilterChange("")}
           >
+
             <Text
               style={[
                 styles.quickFilterText,
@@ -387,6 +395,7 @@ const ExpensesListScreen: React.FC = () => {
               ]}
             >
               {t("expenses.filter.allTypes")}
+
             </Text>
           </TouchableOpacity>
           <TouchableOpacity

@@ -34,10 +34,19 @@ const languageDetector: any = {
       }
 
       // Otherwise, use device language
-      const bestLanguage = RNLocalize.findBestAvailableLanguage(
-        Object.keys(resources)
-      );
-      callback(bestLanguage?.languageTag || 'en');
+      const deviceLocales = RNLocalize.getLocales();
+      const availableLanguages = Object.keys(resources);
+
+      // Find the first device locale that matches our available languages
+      let bestLanguage = 'en'; // default fallback
+      for (const locale of deviceLocales) {
+        if (availableLanguages.includes(locale.languageCode)) {
+          bestLanguage = locale.languageCode;
+          break;
+        }
+      }
+
+      callback(bestLanguage);
     } catch (error) {
       console.error('Error detecting language:', error);
       callback('en');
@@ -57,7 +66,7 @@ i18n
   .use(languageDetector)
   .use(initReactI18next)
   .init({
-    compatibilityJSON: 'v3',
+    compatibilityJSON: 'v4' as any,
     resources,
     fallbackLng: 'en',
     interpolation: {

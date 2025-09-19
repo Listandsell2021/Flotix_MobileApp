@@ -5,6 +5,7 @@
  * @format
  */
 
+
 import React, { useEffect } from "react";
 import { Platform, StatusBar } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -14,6 +15,7 @@ import { AuthProvider } from "./src/state/authSlice";
 import { ExpenseProvider } from "./src/state/expenseSlice";
 import Navigation from "./src/navigation";
 import { request, PERMISSIONS, RESULTS } from "react-native-permissions";
+
 
 function App(): React.JSX.Element {
   async function requestPermissions() {

@@ -226,7 +226,9 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
       }
 
       // Add currency if not default
-      if (formData.currency && formData.currency !== "USD") {
+
+      if (formData.currency && formData.currency !== 'EUR') {
+
         expenseData.currency = formData.currency.toUpperCase();
       }
 

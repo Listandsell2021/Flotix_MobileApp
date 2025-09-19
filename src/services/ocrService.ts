@@ -1,4 +1,8 @@
+
+import { OCR_CONFIG, generateMockOCRData } from '../config/ocr.config';
+
 import { API_KEY } from "@env";
+
 
 export interface ExpenseDetails {
   amount?: number;
@@ -18,13 +22,22 @@ export interface OCRResponse {
 
 class OCRService {
   private readonly apiKey: string;
-  private readonly baseUrl = "https://api.openai.com/v1/chat/completions";
-  // Optional: switch models quickly
-  private readonly model = "gpt-4o"; // or 'gpt-4o-mini'
+
+  private readonly baseUrl = 'https://api.openai.com/v1/chat/completions';
+  private readonly model: string;
+  private processedReceiptCount: number = 0;
 
   constructor() {
-    // ⚠️ For local testing only. In production call your backend (see analyzeReceiptViaBackend).
-    this.apiKey = API_KEY;
+    // Use configuration from config file
+    this.apiKey = OCR_CONFIG.openAIApiKey;
+    this.model = OCR_CONFIG.model;
+
+    if (!this.apiKey && OCR_CONFIG.useRealOCR) {
+      console.warn('⚠️ OpenAI API key not configured in src/config/ocr.config.ts');
+      console.warn('⚠️ OCR will use mock data. To enable real OCR:');
+      console.warn('   1. Add your OpenAI API key to src/config/ocr.config.ts');
+      console.warn('   2. Set useRealOCR to true');
+    }
   }
 
   /**
@@ -32,6 +45,17 @@ class OCRService {
    * Sends a base64 image and asks GPT to return STRICT JSON.
    */
   async analyzeReceipt(imageBase64: string): Promise<OCRResponse> {
+    console.log('🔍 OCR Analysis Started');
+    console.log('   useRealOCR:', OCR_CONFIG.useRealOCR);
+    console.log('   hasApiKey:', !!this.apiKey);
+
+    if (!OCR_CONFIG.useRealOCR || !this.apiKey) {
+      console.log('⚠️ Falling back to mock data');
+      // Use mock backend with varied data
+      return this.analyzeReceiptViaBackend(imageBase64);
+    }
+
+    console.log('✅ Using real OpenAI OCR with model:', this.model);
     try {
       const body = {
         model: this.model,
@@ -122,38 +146,57 @@ class OCRService {
    * let the server call OpenAI with your secret key.
    */
   async analyzeReceiptViaBackend(imageBase64: string): Promise<OCRResponse> {
+    // For development: return varied mock data for each receipt
+    console.warn('Using mock OCR data. Configure OpenAI API key in src/config/ocr.config.ts for real OCR.');
+
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+
+    // Get varied mock data based on receipt count
+    const mockData = generateMockOCRData(this.processedReceiptCount++);
+
+    // Add some randomness to amounts
+    const variance = 0.8 + Math.random() * 0.4; // 80% to 120%
+    mockData.amount = parseFloat((mockData.amount * variance).toFixed(2));
+
+    return {
+      success: true,
+      data: mockData as ExpenseDetails,
+    };
+
+    /* Production implementation:
     try {
-      const response = await fetch(
-        "http://YOUR_BACKEND_HOST:3001/api/ocr/analyze",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ image: imageBase64, format: "base64" }),
-        }
-      );
+
+      const response = await fetch('YOUR_ACTUAL_BACKEND_URL/api/ocr/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageBase64, format: 'base64' }),
+      });
 
       if (!response.ok) {
-        const text = await response.text().catch(() => "");
-        throw new Error(`Backend OCR error: ${response.status} ${text}`);
+        throw new Error(`Backend OCR error: ${response.status}`);
+
+      
       }
 
       const result = await response.json();
-
       if (result?.success && result?.data) {
         const normalized = this.normalizeExpense(result.data);
         return { success: true, data: normalized };
       }
 
-      // If backend failed with a message, surface it
-      if (result?.message) throw new Error(result.message);
-
-      // Optional: fallback to direct OpenAI
-      return this.analyzeReceipt(imageBase64);
+      throw new Error(result?.message || 'OCR processing failed');
     } catch (error) {
-      console.error("Backend OCR error:", error);
-      // Optional: fallback to direct OpenAI
-      return this.analyzeReceipt(imageBase64);
+
+      console.error('Backend OCR error:', error);
+      return {
+        success: false,
+        error: 'OCR service temporarily unavailable',
+      };
+
+ 
     }
+    */
   }
 
   private normalizeExpense(input: any): ExpenseDetails {
@@ -167,11 +210,38 @@ class OCRService {
       amountNum = isNaN(n) ? undefined : n;
     }
 
-    const currency = (input?.currency || "EUR") as string;
-    const date =
-      typeof input?.date === "string" && input.date.match(/^\d{4}-\d{2}-\d{2}$/)
-        ? new Date(input.date).toISOString()
-        : new Date().toISOString();
+   const currency = (input?.currency || 'EUR') as string;
+
+    // Ensure date is in YYYY-MM-DD format and not in the future
+    let date: string;
+    if (typeof input?.date === 'string') {
+      // If already in YYYY-MM-DD format
+      if (input.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        date = input.date;
+      } else if (input.date.includes('T')) {
+        // If in ISO format, extract date part
+        date = input.date.split('T')[0];
+      } else {
+        // Try to parse various date formats
+        const parsedDate = new Date(input.date);
+        if (!isNaN(parsedDate.getTime())) {
+          date = parsedDate.toISOString().split('T')[0];
+        } else {
+          date = new Date().toISOString().split('T')[0];
+        }
+      }
+    } else {
+      date = new Date().toISOString().split('T')[0];
+    }
+
+    // Ensure date is not in the future
+    const inputDate = new Date(date);
+    const today = new Date();
+    if (inputDate > today) {
+      date = today.toISOString().split('T')[0];
+    }
+
+
 
     const merchant =
       typeof input?.merchant === "string" && input.merchant.trim().length > 0

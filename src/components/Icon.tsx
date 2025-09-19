@@ -38,6 +38,8 @@ import {
   MoreVertical,
   Image,
   Folder,
+  Layers,
+  ChevronRight as ChevronRightIcon,
   LucideIcon
 } from 'lucide-react-native';
 import { theme } from '../styles/theme';
@@ -79,7 +81,9 @@ export type IconName =
   | 'refresh'
   | 'more'
   | 'image'
-  | 'folder';
+  | 'folder'
+  | 'stack'
+  | 'chevron-right';
 
 interface IconProps {
   name: IconName;
@@ -135,6 +139,8 @@ const Icon: React.FC<IconProps> = ({
       case 'more': return MoreVertical;
       case 'image': return Image;
       case 'folder': return Folder;
+      case 'stack': return Layers;
+      case 'chevron-right': return ChevronRightIcon;
       default: return Home;
     }
   };
