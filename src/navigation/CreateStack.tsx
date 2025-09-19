@@ -2,11 +2,13 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import UploadReceiptScreen from '../screens/Create/UploadReceiptScreen';
 import ExpenseFormScreen from '../screens/Create/ExpenseFormScreen';
+import MultiUploadScreen from '../screens/Create/MultiUploadScreen';
 import { theme } from '../styles/theme';
 
 export type CreateStackParamList = {
   UploadReceipt: undefined;
   ExpenseForm: { receiptUrl?: string };
+  MultiUpload: undefined;
 };
 
 const Stack = createStackNavigator<CreateStackParamList>();
@@ -37,6 +39,11 @@ const CreateStack: React.FC = () => {
         name="ExpenseForm"
         component={ExpenseFormScreen}
         options={{ title: 'Expense Details' }}
+      />
+      <Stack.Screen
+        name="MultiUpload"
+        component={MultiUploadScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

@@ -19,7 +19,7 @@ import Toast from '../../components/Toast';
 import LanguageSelector from '../../components/LanguageSelector';
 
 const LoginScreen: React.FC = () => {
-  const { t } = useTranslation();
+    const { t } = useTranslation();
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,15 +43,15 @@ const LoginScreen: React.FC = () => {
     const newErrors: { email?: string; password?: string } = {};
 
     if (!email.trim()) {
-      newErrors.email = t('validation.required');
+        newErrors.email = t('validation.required');
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = t('validation.invalidEmail');
+       newErrors.email = t('validation.invalidEmail');
     }
 
     if (!password) {
-      newErrors.password = t('validation.required');
+     newErrors.password = t('validation.required');
     } else if (password.length < 6) {
-      newErrors.password = t('validation.minLength', { min: 6 });
+        newErrors.password = t('validation.minLength', { min: 6 });
     }
 
     setErrors(newErrors);
@@ -81,13 +81,13 @@ const LoginScreen: React.FC = () => {
       // Handle case where driverData might not be present
       const driverData = response.data.driverData || null;
       await login(response.data.user, driverData, response.data.tokens.accessToken, response.data.tokens.refreshToken);
-      showToast(t('auth.loginSuccess'), 'success');
+        showToast(t('auth.loginSuccess'), 'success');
     } catch (error: any) {
       console.error('Login error:', error);
       let errorMessage = t('errors.generic');
-
+      
       if (error.response?.status === 401) {
-        errorMessage = t('auth.loginError');
+     errorMessage = t('auth.loginError');
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
@@ -110,7 +110,7 @@ const LoginScreen: React.FC = () => {
           <View style={styles.headerContainer}>
             <Text style={styles.title}>Flotix</Text>
             <Text style={styles.subtitle}>Fleet Expense Management</Text>
-            <LanguageSelector style={styles.languageSelector} />
+              <LanguageSelector style={styles.languageSelector} />
           </View>
 
           <View style={styles.formContainer}>
@@ -126,7 +126,7 @@ const LoginScreen: React.FC = () => {
             </View>
             
             <TextInput
-              label={t('auth.email')}
+        label={t('auth.email')}
               value={email}
               onChangeText={(text) => {
                 setEmail(text);
@@ -135,12 +135,12 @@ const LoginScreen: React.FC = () => {
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
-              placeholder={t('auth.email')}
+             placeholder={t('auth.email')}
               error={errors.email}
             />
 
             <TextInput
-              label={t('auth.password')}
+         label={t('auth.password')}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     textAlign: 'center',
   },
-  languageSelector: {
+    languageSelector: {
     marginTop: theme.spacing.lg,
     alignSelf: 'center',
     minWidth: 150,

@@ -8,8 +8,7 @@
 import React from 'react';
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-import './src/i18n/index'; // Initialize i18n
+import './src/i18n/index'; 
 import { AuthProvider } from './src/state/authSlice';
 import { ExpenseProvider } from './src/state/expenseSlice';
 import Navigation from './src/navigation';

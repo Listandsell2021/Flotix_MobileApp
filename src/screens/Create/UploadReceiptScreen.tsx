@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -97,7 +98,7 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
         updateForm({
           type: response.data.type === 'FUEL' ? 'Fuel' : 'Misc',
           amountFinal: response.data.amount || 0,
-          currency: response.data.currency || 'USD',
+          currency: response.data.currency || 'EUR',
           date: dateToUse,
           category: mapCategory(response.data.category),
           merchant: response.data.merchant,
@@ -105,7 +106,7 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
         });
 
         const amount = response.data.amount || 0;
-        const currency = response.data.currency || 'USD';
+        const currency = response.data.currency || 'EUR';
         showToast(`OCR detected: ${formatCurrency(amount, currency)}`, 'success');
       } else {
         console.log('OCR failed or no data detected:', response.error);
@@ -150,6 +151,16 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
             Take a photo or select an image of your receipt. We'll extract the information automatically using OCR.
           </Text>
 
+          {/* Multi-Upload Button */}
+          <TouchableOpacity
+            style={styles.multiUploadButton}
+            onPress={() => navigation.navigate('MultiUpload')}
+          >
+            <Icon name="stack" size={20} color={theme.colors.primary} />
+            <Text style={styles.multiUploadButtonText}>Multi-Receipt Upload</Text>
+            <Icon name="chevron-right" size={16} color={theme.colors.primary} />
+          </TouchableOpacity>
+
           <ImagePicker
             onImageSelected={handleImageSelected}
             selectedImageUri={selectedImageUri}
@@ -178,7 +189,7 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({ navigation })
                   <View style={styles.ocrResultRow}>
                     <Text style={styles.ocrResultLabel}>Amount:</Text>
                     <Text style={styles.ocrResultValue}>
-                      {formatCurrency(ocrResult.amount, ocrResult.currency || 'USD')}
+                      {formatCurrency(ocrResult.amount, ocrResult.currency || 'EUR')}
                     </Text>
                   </View>
                 )}
@@ -332,6 +343,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 2,
     textAlign: 'right',
+  },
+  multiUploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: theme.colors.surface,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.medium,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '20',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  multiUploadButtonText: {
+    flex: 1,
+    fontSize: theme.fontSize.body,
+    fontWeight: '600',
+    color: theme.colors.primary,
+    marginLeft: theme.spacing.md,
   },
 });
 

@@ -94,7 +94,7 @@ const AppTabs: React.FC = () => {
         name="Profile"
         component={ProfileScreen}
         options={{
-          title: t('navigation.profile'),
+           title: t('navigation.profile'),
           tabBarIcon: ({ focused }) => <TabBarIcon focused={focused} iconName="user" />,
           tabBarLabel: () => null,
         }}
