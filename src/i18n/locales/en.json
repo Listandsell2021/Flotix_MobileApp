@@ -36,7 +36,9 @@
     "loginSuccess": "Login successful",
     "sessionExpired": "Session expired. Please login again.",
     "logoutConfirm": "Are you sure you want to logout?",
-    "logoutSuccess": "Logged out successfully"
+    "logoutSuccess": "Logged out successfully",
+    "contactAdminForAccount": "Contact your admin if you don't have an account.",
+    "loginInstruction": "Please use your credentials to sign in."
   },
   "app": {
     "name": "Flotix",
@@ -101,10 +103,8 @@
     "loadingDetails": "Loading expense details...",
     "deleteConfirm": "Delete Expense",
     "deleteMessage": "Are you sure you want to delete this expense? This action cannot be undone.",
-    "type": {
-      "fuel": "Fuel",
-      "misc": "Misc"
-    }
+    "location": "Location",
+    "currentOdometer": "Current Odometer"
   },
   "expenses": {
     "title": "Expenses",
@@ -186,7 +186,9 @@
     "captureOrSelect": "Capture or select a photo of your receipt",
     "expenseDetailsExtracted": "Expense Details Extracted",
     "uploading": "Uploading receipt...",
-    "uploaded": "Receipt uploaded"
+    "uploaded": "Receipt uploaded",
+    "uploadInstruction": "Take a photo or select an image of your receipt. We'll extract the information automatically using OCR.",
+    "tip": "Tip: For best OCR results, ensure the receipt is well-lit and the text is clearly visible."
   },
   "profile": {
     "title": "Profile",
@@ -243,7 +245,8 @@
     "history": "History",
     "createExpense": "Create Expense",
     "expenseDetails": "Expense Details",
-    "uploadReceipt": "Upload Receipt"
+    "uploadReceipt": "Upload Receipt",
+    "expenseHistory": "Expense History"
   },
   "form": {
     "storeName": "Store Name",

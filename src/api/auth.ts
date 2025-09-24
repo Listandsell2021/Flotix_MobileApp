@@ -77,7 +77,7 @@ export const authApi = {
     try {
       console.log('Attempting login to:', '/api/auth/login');
       console.log('With credentials:', { email: credentials.email, password: '[HIDDEN]' });
-      
+
       const response = await apiClient.post<LoginResponse>('/api/auth/login', credentials);
       console.log('Login response:', response.status, response.data);
       return response.data;
@@ -115,7 +115,7 @@ export const authApi = {
   getMe: async (): Promise<User> => {
     try {
       console.log('Attempting getMe to:', '/api/me');
-      
+
       const response = await apiClient.get<User>('/api/me');
       console.log('GetMe response:', response.status);
       return response.data;

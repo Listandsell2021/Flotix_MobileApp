@@ -64,9 +64,9 @@ class ApiClient {
               console.error('❌ No refresh token found in storage');
               // Clear all auth data and reject with specific error
               await AsyncStorage.multiRemove(['accessToken', 'refreshToken', 'user', 'driverData']);
-              const error = new Error('Session expired. Please login again.');
-              (error as any).code = 'NO_REFRESH_TOKEN';
-              throw error;
+              const authError = new Error('Session expired. Please login again.');
+              (authError as any).code = 'NO_REFRESH_TOKEN';
+              throw authError;
             }
 
             console.log('📤 Sending refresh request to:', `${API_URL}/api/auth/refresh`);
