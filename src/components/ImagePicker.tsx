@@ -16,6 +16,7 @@ import {
 import { theme } from "../styles/theme";
 import Button from "./Button";
 import { useTranslation } from "react-i18next";
+import { permissionManager } from "../utils/permissions";
 
 interface ImagePickerProps {
   onImageSelected: (uri: string) => void;
@@ -30,39 +31,91 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
 
   const selectImage = () => {
     Alert.alert(
-      "Select Image",
-      "Choose an option",
+      t("upload.selectImage"),
+      t("upload.chooseOption"),
       [
-        { text: "Camera", onPress: openCamera },
-        { text: "Photo Library", onPress: openImageLibrary },
-        { text: "Cancel", style: "cancel" },
+        { text: t("upload.camera"), onPress: openCamera },
+        { text: t("upload.photoLibrary"), onPress: openImageLibrary },
+        { text: t("upload.cancel"), style: "cancel" },
       ],
       { cancelable: true }
     );
   };
 
-  const openCamera = () => {
-    const options = {
-      mediaType: "photo" as MediaType,
-      includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
-      quality: 0.8 as any,
-    };
+  const openCamera = async () => {
+    try {
+      console.log('Requesting camera permission...');
+      const permissionResult = await permissionManager.requestPermission('camera');
 
-    launchCamera(options, handleResponse);
+      if (!permissionResult.granted) {
+        console.log('Camera permission not granted:', permissionResult.message);
+        if (permissionResult.message && !permissionResult.shouldShowSettings) {
+          Alert.alert(
+            t("permissions.cameraRequired"),
+            permissionResult.message
+          );
+        }
+        return;
+      }
+
+      console.log('Camera permission granted, launching camera...');
+
+      // Permission granted, launch camera
+      const options = {
+        mediaType: "photo" as MediaType,
+        includeBase64: false,
+        maxHeight: 2000,
+        maxWidth: 2000,
+        quality: 0.8 as any,
+        saveToPhotos: false, // Don't save to photos automatically
+      };
+
+      launchCamera(options, handleResponse);
+    } catch (error) {
+      console.error('Camera launch error:', error);
+      Alert.alert(
+        t("common.error"),
+        t("permissions.cameraError")
+      );
+    }
   };
 
-  const openImageLibrary = () => {
-    const options = {
-      mediaType: "photo" as MediaType,
-      includeBase64: false,
-      maxHeight: 2000,
-      maxWidth: 2000,
-      quality: 0.8 as any,
-    };
+  const openImageLibrary = async () => {
+    try {
+      console.log('Requesting photo library permission...');
+      const permissionResult = await permissionManager.requestPermission('photoLibrary');
 
-    launchImageLibrary(options, handleResponse);
+      if (!permissionResult.granted) {
+        console.log('Photo library permission not granted:', permissionResult.message);
+        if (permissionResult.message && !permissionResult.shouldShowSettings) {
+          Alert.alert(
+            t("permissions.photoLibraryRequired"),
+            permissionResult.message
+          );
+        }
+        return;
+      }
+
+      console.log('Photo library permission granted, launching library...');
+
+      // Permission granted, launch image library
+      const options = {
+        mediaType: "photo" as MediaType,
+        includeBase64: false,
+        maxHeight: 2000,
+        maxWidth: 2000,
+        quality: 0.8 as any,
+        selectionLimit: 1, // Limit to 1 image
+      };
+
+      launchImageLibrary(options, handleResponse);
+    } catch (error) {
+      console.error('Photo library launch error:', error);
+      Alert.alert(
+        t("common.error"),
+        t("permissions.photoLibraryError")
+      );
+    }
   };
 
   const handleResponse = (response: ImagePickerResponse) => {

@@ -120,8 +120,8 @@ const LoginScreen: React.FC = () => {
       >
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Flotix</Text>
-            <Text style={styles.subtitle}>Fleet Expense Management</Text>
+            <Text style={styles.title}>{t('app.name')}</Text>
+            <Text style={styles.subtitle}>{t('app.subtitle')}</Text>
               <LanguageSelector style={styles.languageSelector} />
           </View>
 

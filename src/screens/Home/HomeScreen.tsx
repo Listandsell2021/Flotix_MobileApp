@@ -124,12 +124,34 @@ const HomeScreen: React.FC = () => {
       }
 
       console.log("Loading vehicle data for ID:", assignedVehicleId);
+      console.log("User details for vehicle access:", {
+        userId: state.user?._id,
+        userRole: state.user?.role,
+        userCompanyId: state.user?.companyId,
+        assignedVehicleId: assignedVehicleId
+      });
+
       const response = await vehiclesApi.getVehicleDetails(assignedVehicleId);
       setVehicleData(response.data);
       console.log("Vehicle data loaded successfully:", response.data);
     } catch (error: any) {
       console.error("Error loading vehicle data:", error);
-      showToast(t("errors.loadVehicle"), "error");
+
+      // Handle 403 specifically - likely vehicle assignment issue
+      if (error.response?.status === 403) {
+        console.error("❌ 403 Access Denied - Vehicle assignment issue:", {
+          message: error.response?.data?.message,
+          userInfo: {
+            userId: state.user?._id,
+            assignedVehicleId: state.user?.assignedVehicleId,
+            role: state.user?.role,
+            companyId: state.user?.companyId
+          }
+        });
+        showToast(t("errors.loadVehicle"), "error");
+      } else {
+        showToast(t("errors.loadVehicle"), "error");
+      }
     }
   };
 
@@ -233,7 +255,7 @@ const HomeScreen: React.FC = () => {
                   <Icon name="money" size={16} color="#ffffff" />
                 </View>
                 <View style={styles.compactAppInfo}>
-                  <Text style={styles.compactAppName}>Flotix</Text>
+                  <Text style={styles.compactAppName}>{t('app.name')}</Text>
                   <Text style={styles.compactAppSubtitle}>
                     {t("home.expenseTracker")}
                   </Text>
@@ -343,7 +365,7 @@ const HomeScreen: React.FC = () => {
                       ? vehicleData.currentOdometer.toLocaleString()
                       : "45,230"}
                   </Text>
-                  <Text style={styles.compactOdometerLabel}>KM</Text>
+                  <Text style={styles.compactOdometerLabel}>{t('home.km')}</Text>
                 </View>
               </View>
             </View>

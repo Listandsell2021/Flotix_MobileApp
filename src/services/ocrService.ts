@@ -71,7 +71,7 @@ class OCRService {
                   `{\n` +
                   `  "amount": number (total amount),\n` +
                   `  "currency": string (ISO 4217 like EUR, USD),\n` +
-                  `  "date": string (YYYY-MM-DD),\n` +
+                  `  "date": string (dd.mm.yyyy),\n` +
                   `  "merchant": string,\n` +
                   `  "category": string (fuel, parking, toll, repair, food, etc.),\n` +
                   `  "type": string ("FUEL" or "MISC")\n` +
@@ -203,33 +203,54 @@ class OCRService {
 
     const currency = (input?.currency || 'EUR') as string;
 
-    // Ensure date is in YYYY-MM-DD format and not in the future
+    // Convert date to dd.mm.yyyy format and validate
     let date: string;
     if (typeof input?.date === 'string') {
-      // If already in YYYY-MM-DD format
-      if (input.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      // If already in dd.mm.yyyy format
+      if (input.date.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
         date = input.date;
+      } else if (input.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // If in YYYY-MM-DD format, convert to dd.mm.yyyy
+        const [year, month, day] = input.date.split('-');
+        date = `${day}.${month}.${year}`;
       } else if (input.date.includes('T')) {
-        // If in ISO format, extract date part
-        date = input.date.split('T')[0];
+        // If in ISO format, extract date part and convert
+        const datePart = input.date.split('T')[0];
+        const [year, month, day] = datePart.split('-');
+        date = `${day}.${month}.${year}`;
       } else {
-        // Try to parse various date formats
+        // Try to parse various date formats and convert to dd.mm.yyyy
         const parsedDate = new Date(input.date);
         if (!isNaN(parsedDate.getTime())) {
-          date = parsedDate.toISOString().split('T')[0];
+          const day = parsedDate.getDate().toString().padStart(2, '0');
+          const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
+          const year = parsedDate.getFullYear();
+          date = `${day}.${month}.${year}`;
         } else {
-          date = new Date().toISOString().split('T')[0];
+          const today = new Date();
+          const day = today.getDate().toString().padStart(2, '0');
+          const month = (today.getMonth() + 1).toString().padStart(2, '0');
+          const year = today.getFullYear();
+          date = `${day}.${month}.${year}`;
         }
       }
     } else {
-      date = new Date().toISOString().split('T')[0];
+      const today = new Date();
+      const day = today.getDate().toString().padStart(2, '0');
+      const month = (today.getMonth() + 1).toString().padStart(2, '0');
+      const year = today.getFullYear();
+      date = `${day}.${month}.${year}`;
     }
 
-    // Ensure date is not in the future
-    const inputDate = new Date(date);
+    // Ensure date is not in the future - convert to Date for validation
+    const [day, month, year] = date.split('.');
+    const inputDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     const today = new Date();
     if (inputDate > today) {
-      date = today.toISOString().split('T')[0];
+      const todayDay = today.getDate().toString().padStart(2, '0');
+      const todayMonth = (today.getMonth() + 1).toString().padStart(2, '0');
+      const todayYear = today.getFullYear();
+      date = `${todayDay}.${todayMonth}.${todayYear}`;
     }
 
 

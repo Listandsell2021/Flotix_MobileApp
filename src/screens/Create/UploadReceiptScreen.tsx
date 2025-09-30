@@ -124,12 +124,12 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
         const amount = response.data.amount || 0;
 
         const currency = response.data.currency || 'EUR';
-        showToast(`OCR detected: ${formatCurrency(amount, currency)}`, 'success');
+        showToast(t("upload.ocrSuccess"), 'success');
 
       } else {
         console.log("OCR failed or no data detected:", response.error);
         showToast(
-          response.error || "OCR processing completed, but no details detected",
+          response.error || t("errors.extractFailed"),
           "info"
         );
       }
@@ -137,7 +137,7 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
       console.error("OCR processing error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      showToast(`OCR processing failed: ${errorMessage}`, "error");
+      showToast(t("errors.ocrFailed"), "error");
     } finally {
       setProcessingOCR(false);
     }
@@ -153,7 +153,7 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
       return base64;
     } catch (error) {
       console.error("Error converting image to base64:", error);
-      throw new Error("Failed to convert image to base64");
+      throw new Error(t("errors.captureImage"));
     }
   };
 
@@ -180,7 +180,7 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
             onPress={() => navigation.navigate('MultiUpload')}
           >
             <Icon name="stack" size={20} color={theme.colors.primary} />
-            <Text style={styles.multiUploadButtonText}>Multi-Receipt Upload</Text>
+            <Text style={styles.multiUploadButtonText}>{t("upload.multiReceiptUpload")}</Text>
             <Icon name="chevron-right" size={16} color={theme.colors.primary} />
           </TouchableOpacity>
 

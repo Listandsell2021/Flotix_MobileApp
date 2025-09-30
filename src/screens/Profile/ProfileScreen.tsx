@@ -63,7 +63,7 @@ const ProfileScreen: React.FC = () => {
       setCompany(companyData);
     } catch (error) {
       console.error("❌ Failed to load company data:", error);
-      showToast("Failed to load company information", "error");
+      showToast(t("errors.loadCompany"), "error");
     } finally {
       setCompanyLoading(false);
     }
@@ -117,7 +117,7 @@ const ProfileScreen: React.FC = () => {
             showToast(t("profile.clearCacheSuccess"), "success");
           } catch (error) {
             console.error("Clear cache error:", error);
-            showToast("Failed to clear cache", "error");
+            showToast(t("errors.clearCache"), "error");
           } finally {
             setLoading(false);
           }
@@ -150,7 +150,7 @@ const ProfileScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>User information not available</Text>
+          <Text style={styles.errorText}>{t("profile.userNotAvailable")}</Text>
         </View>
       </SafeAreaView>
     );
@@ -189,8 +189,8 @@ const ProfileScreen: React.FC = () => {
               label={t("profile.company")}
               value={
                 companyLoading
-                  ? "Loading..."
-                  : company?.name || state.user.companyId || "Not available"
+                  ? t("common.loading")
+                  : company?.name || state.user.companyId || t("common.noData")
               }
             />
             {company?.address && (
@@ -243,9 +243,9 @@ const ProfileScreen: React.FC = () => {
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>FleetFlow</Text>
-            <Text style={styles.footerSubtext}>Fleet Expense Management</Text>
-            <Text style={styles.footerVersion}>v1.0.0</Text>
+            <Text style={styles.footerText}>{t("app.name")}</Text>
+            <Text style={styles.footerSubtext}>{t("app.subtitle")}</Text>
+            <Text style={styles.footerVersion}>{t("app.version")}</Text>
           </View>
         </View>
       </ScrollView>

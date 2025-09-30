@@ -89,7 +89,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                     <Text style={styles.languageSubtext}>{item.name}</Text>
                   </View>
                   {item.code === i18n.language && (
-                    <Icon name="checkmark-circle" size={24} color="#007AFF" />
+                    <Icon name="checkmark-circle" size={24} color="#3488cc" />
                   )}
                 </TouchableOpacity>
               )}
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   selectedText: {
     fontWeight: "600",
-    color: "#007AFF",
+    color: "#3488cc",
   },
 });
 

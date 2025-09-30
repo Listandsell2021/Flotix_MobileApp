@@ -11,7 +11,7 @@ export const vehiclesApi = {
   getVehicleDetails: async (vehicleId: string): Promise<VehicleDetailsResponse> => {
     try {
       console.log('Fetching vehicle details for ID:', vehicleId);
-      
+
       const response = await apiClient.get<VehicleDetailsResponse>(`/api/vehicles/${vehicleId}`);
       console.log('Vehicle details response:', response.status, response.data);
       return response.data;
@@ -21,6 +21,23 @@ export const vehiclesApi = {
         status: error.response?.status,
         data: error.response?.data,
         vehicleId
+      });
+      throw error;
+    }
+  },
+
+  getMyVehicle: async (): Promise<VehicleDetailsResponse> => {
+    try {
+      console.log('Fetching driver\'s assigned vehicle...');
+
+      const response = await apiClient.get<VehicleDetailsResponse>('/api/vehicles/my-vehicle');
+      console.log('My vehicle response:', response.status, response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('My vehicle error:', {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data
       });
       throw error;
     }

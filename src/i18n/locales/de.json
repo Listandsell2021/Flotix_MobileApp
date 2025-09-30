@@ -1,4 +1,9 @@
 {
+  "app": {
+    "name": "Flotix",
+    "subtitle": "Flottenausgaben-Management",
+    "version": "v1.0.0"
+  },
   "common": {
     "loading": "Laden...",
     "error": "Fehler",
@@ -55,6 +60,7 @@
     "addExpense": "Ausgabe hinzufügen",
     "viewExpenses": "Ausgaben anzeigen",
     "viewAll": "Alle anzeigen",
+    "km": "KM",
     "statistics": "Statistiken",
     "totalExpenses": "Gesamtausgaben",
     "thisMonth": "Dieser Monat",
@@ -90,6 +96,11 @@
     "currentReading": "Aktuellen Stand eingeben",
     "previousReading": "Vorherig",
     "addNotes": "Fügen Sie zusätzliche Notizen hinzu...",
+    "amountPlaceholder": "0,00",
+    "odometerPlaceholder": "Aktuellen Kilometerstand eingeben",
+    "currentOdometer": " - Aktueller Kilometerstand: {{odometer}} km",
+    "newVehicle": "(neues Fahrzeug)",
+    "updating": "(wird aktualisiert...)",
     "create": "Ausgabe erstellen",
     "edit": "Ausgabe bearbeiten",
     "delete": "Ausgabe löschen",
@@ -188,7 +199,8 @@
     "uploading": "Beleg wird hochgeladen...",
     "uploaded": "Beleg hochgeladen",
     "uploadInstruction": "Machen Sie ein Foto oder wählen Sie ein Bild Ihres Belegs aus. Wir extrahieren die Informationen automatisch per OCR.",
-    "tip": "Tipp: Um optimale OCR-Ergebnisse zu erzielen, stellen Sie sicher, dass der Beleg gut beleuchtet und der Text deutlich sichtbar ist."
+    "tip": "Tipp: Um optimale OCR-Ergebnisse zu erzielen, stellen Sie sicher, dass der Beleg gut beleuchtet und der Text deutlich sichtbar ist.",
+    "multiReceiptUpload": "Mehrfach-Beleg-Upload"
   },
   "profile": {
     "title": "Profil",
@@ -261,7 +273,12 @@
     "minLength": "Mindestens {{min}} Zeichen erforderlich",
     "maxLength": "Maximal {{max}} Zeichen erlaubt",
     "passwordMismatch": "Passwörter stimmen nicht überein",
-    "enterOdometer": "Bitte geben Sie den aktuellen Kilometerstand ein"
+    "enterOdometer": "Bitte geben Sie den aktuellen Kilometerstand ein",
+    "odometerRequired": "Aktueller Kilometerstand ist erforderlich",
+    "odometerInvalid": "Kilometerstand muss eine gültige positive Zahl sein",
+    "odometerTooLow": "Der Wert kann nicht niedriger als der aktuelle Kilometerzähler ({{current}} km) sein. Bitte geben Sie den aktualisierten Wert ein.",
+    "amountRequired": "Betrag ist erforderlich und muss größer als 0 sein",
+    "categoryRequired": "Kategorie ist für sonstige Ausgaben erforderlich"
   },
   "dates": {
     "today": "Heute",
@@ -276,6 +293,11 @@
   },
   "errors": {
     "generic": "Etwas ist schief gelaufen",
+    "loadCompany": "Unternehmensinformationen konnten nicht geladen werden",
+    "clearCache": "Cache konnte nicht geleert werden",
+    "captureImage": "Bild konnte nicht in Base64 umgewandelt werden",
+    "extractFailed": "OCR-Verarbeitung abgeschlossen, aber keine Details erkannt",
+    "ocrFailed": "OCR-Verarbeitung fehlgeschlagen",
     "network": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung",
     "serverError": "Serverfehler. Bitte versuchen Sie es später erneut",
     "unauthorized": "Nicht autorisiert. Bitte melden Sie sich erneut an",
@@ -297,5 +319,69 @@
     "expenseCreated": "Ausgabe erfolgreich erstellt!",
     "editNotImplemented": "Bearbeitungsfunktion noch nicht implementiert",
     "deleteNotImplemented": "Löschfunktion noch nicht implementiert"
+  },
+  "multiUpload": {
+    "title": "Stapel-Upload",
+    "subtitle": "Mehrere Belege verarbeiten",
+    "emptyTitle": "Noch keine Belege",
+    "emptyDescription": "Laden Sie mehrere Belege hoch, um sie effizient im Stapel zu verarbeiten",
+    "addReceipts": "Belege hinzufügen",
+    "addReceiptsSubtitle": "Wählen Sie, wie Sie Ihre Belege hinzufügen möchten",
+    "chooseFromGallery": "Aus Galerie wählen",
+    "galleryDescription": "Bis zu 10 Bilder auswählen",
+    "takePhoto": "Foto aufnehmen",
+    "takePhotoDescription": "Neuen Beleg fotografieren",
+    "useCamera": "Kamera zum Fotografieren des Belegs verwenden",
+    "type": "Typ",
+    "amountRequired": "Betrag *",
+    "date": "Datum",
+    "merchant": "Händler",
+    "notes": "Notizen",
+    "vehicleOdometerReading": "Fahrzeug-Kilometerstand",
+    "ready": "Bereit",
+    "total": "Gesamt",
+    "add": "Hinzufügen",
+    "uploadAll": "Alle hochladen",
+    "uploading": "Wird hochgeladen...",
+    "cancel": "Abbrechen",
+    "fuel": "KRAFTSTOFF",
+    "misc": "SONSTIGES",
+    "pending": "Ausstehend",
+    "uploaded": "✓ Erledigt",
+    "failed": "✗ Fehlgeschlagen",
+    "ocrProcessing": "OCR...",
+    "ocrFailed": "✗ OCR",
+    "ocrCompleted": "OCR",
+    "removeReceipt": "Beleg entfernen",
+    "removeReceiptConfirm": "Möchten Sie diesen Beleg wirklich entfernen?",
+    "remove": "Entfernen",
+    "uploadAllExpenses": "Alle Ausgaben hochladen",
+    "uploadAllConfirm": "Alle Ausgaben zu Ihrem Konto hochladen?",
+    "partialUploadSuccess": "Teilweiser Upload-Erfolg",
+    "uploadFailed": "Upload fehlgeschlagen",
+    "viewHistory": "Verlauf anzeigen",
+    "stayHere": "Hier bleiben",
+    "odometerRequired": "Kilometerstand ist erforderlich",
+    "odometerInvalid": "Kilometerstand muss eine gültige positive Zahl sein",
+    "odometerTooLow": "Der Wert kann nicht niedriger als der aktuelle Kilometerzähler ({{current}} km) sein. Bitte geben Sie den aktualisierten Wert ein.",
+    "noValidReceipts": "Keine gültigen Belege zum Hochladen",
+    "enterValidOdometer": "Bitte geben Sie einen gültigen Kilometerstand ein",
+    "receiptRemovedSuccess": "Beleg erfolgreich entfernt",
+    "unexpectedResponse": "Unerwartete Antwort vom Server",
+    "currentOdometer": " - Aktueller Kilometerstand: {{odometer}} km",
+    "newVehicle": "(neues Fahrzeug)",
+    "updating": "(wird aktualisiert...)",
+    "placeholders": {
+      "amount": "0,00",
+      "date": "tt.mm.jjjj",
+      "merchant": "Geschäftsname",
+      "notes": "Zusätzliche Notizen (optional)",
+      "odometer": "Aktuellen Kilometerstand eingeben"
+    },
+    "messages": {
+      "failedToUpload": "Ausgaben konnten nicht hochgeladen werden",
+      "failedToProcess": "Kamerabild konnte nicht verarbeitet werden",
+      "unknownError": "Unbekannter Fehler"
+    }
   }
 }

@@ -4,21 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as RNLocalize from 'react-native-localize';
 
 import en from './locales/en.json';
-import es from './locales/es.json';
-import fr from './locales/fr.json';
 import de from './locales/de.json';
-import hi from './locales/hi.json';
-import zh from './locales/zh.json';
 
 const LANGUAGE_KEY = '@app_language';
 
 const resources = {
   en: { translation: en },
-  es: { translation: es },
-  fr: { translation: fr },
   de: { translation: de },
-  hi: { translation: hi },
-  zh: { translation: zh },
 };
 
 const languageDetector: any = {
@@ -99,9 +91,5 @@ export const changeLanguage = async (language: string) => {
 // Get available languages
 export const getLanguages = () => [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español' },
-  { code: 'fr', name: 'French', nativeName: 'Français' },
   { code: 'de', name: 'German', nativeName: 'Deutsch' },
-  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
-  { code: 'zh', name: 'Chinese', nativeName: '中文' },
 ];

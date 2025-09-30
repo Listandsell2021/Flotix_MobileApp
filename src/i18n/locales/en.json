@@ -1,4 +1,9 @@
 {
+  "app": {
+    "name": "Flotix",
+    "subtitle": "Fleet Expense Management",
+    "version": "v1.0.0"
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",
@@ -55,6 +60,7 @@
     "addExpense": "Add Expense",
     "viewExpenses": "View Expenses",
     "viewAll": "View All",
+    "km": "KM",
     "statistics": "Statistics",
     "totalExpenses": "Total Expenses",
     "thisMonth": "This Month",
@@ -90,6 +96,11 @@
     "currentReading": "Enter current reading",
     "previousReading": "Previous",
     "addNotes": "Add any additional notes...",
+    "amountPlaceholder": "0.00",
+    "odometerPlaceholder": "Enter current odometer reading",
+    "currentOdometer": " - Current odometer: {{odometer}} km",
+    "newVehicle": "(new vehicle)",
+    "updating": "(updating...)",
     "create": "Create Expense",
     "edit": "Edit Expense",
     "delete": "Delete Expense",
@@ -188,7 +199,8 @@
     "uploading": "Uploading receipt...",
     "uploaded": "Receipt uploaded",
     "uploadInstruction": "Take a photo or select an image of your receipt. We'll extract the information automatically using OCR.",
-    "tip": "Tip: For best OCR results, ensure the receipt is well-lit and the text is clearly visible."
+    "tip": "Tip: For best OCR results, ensure the receipt is well-lit and the text is clearly visible.",
+    "multiReceiptUpload": "Multi-Receipt Upload"
   },
   "profile": {
     "title": "Profile",
@@ -261,7 +273,12 @@
     "minLength": "Minimum {{min}} characters required",
     "maxLength": "Maximum {{max}} characters allowed",
     "passwordMismatch": "Passwords do not match",
-    "enterOdometer": "Please enter the current odometer reading"
+    "enterOdometer": "Please enter the current odometer reading",
+    "odometerRequired": "Current odometer reading is required",
+    "odometerInvalid": "Odometer reading must be a valid positive number",
+    "odometerTooLow": "Reading cannot be less than current odometer ({{current}} km). Please enter the updated reading.",
+    "amountRequired": "Amount is required and must be greater than 0",
+    "categoryRequired": "Category is required for miscellaneous expenses"
   },
   "dates": {
     "today": "Today",
@@ -276,6 +293,11 @@
   },
   "errors": {
     "generic": "Something went wrong",
+    "loadCompany": "Failed to load company information",
+    "clearCache": "Failed to clear cache",
+    "captureImage": "Failed to convert image to base64",
+    "extractFailed": "OCR processing completed, but no details detected",
+    "ocrFailed": "OCR processing failed",
     "network": "Network error. Please check your connection",
     "serverError": "Server error. Please try again later",
     "unauthorized": "Unauthorized. Please login again",
@@ -297,5 +319,82 @@
     "expenseCreated": "Expense created successfully!",
     "editNotImplemented": "Edit functionality not implemented yet",
     "deleteNotImplemented": "Delete functionality not implemented yet"
+  },
+  "permissions": {
+    "cameraRequired": "Camera Permission Required",
+    "cameraRequiredMessage": "This app needs camera access to take photos of receipts. Please grant camera permission to continue.",
+    "cameraBlocked": "Camera Access Blocked",
+    "cameraBlockedMessage": "Camera access has been permanently denied. Please enable it in Settings to take photos of receipts.",
+    "cameraError": "Camera permission error. Please try again.",
+    "photoLibraryRequired": "Photo Library Permission Required",
+    "photoLibraryRequiredMessage": "This app needs photo library access to select receipt images. Please grant photo library permission to continue.",
+    "photoLibraryBlocked": "Photo Library Access Blocked",
+    "photoLibraryBlockedMessage": "Photo library access has been permanently denied. Please enable it in Settings to select receipt images.",
+    "photoLibraryError": "Photo library permission error. Please try again.",
+    "openSettings": "Open Settings"
+  },
+  "multiUpload": {
+    "title": "Batch Upload",
+    "subtitle": "Process multiple receipts",
+    "emptyTitle": "No Receipts Yet",
+    "emptyDescription": "Upload multiple receipts to process them efficiently in batch",
+    "addReceipts": "Add Receipts",
+    "addReceiptsSubtitle": "Choose how to add your receipts",
+    "chooseFromGallery": "Choose from Gallery",
+    "galleryDescription": "Select up to 10 images",
+    "takePhoto": "Take Photo",
+    "takePhotoDescription": "Capture a new receipt",
+    "useCamera": "Use camera to capture receipt",
+    "type": "Type",
+    "amountRequired": "Amount *",
+    "date": "Date",
+    "merchant": "Merchant",
+    "notes": "Notes",
+    "vehicleOdometerReading": "Vehicle Odometer Reading",
+    "ready": "Ready",
+    "total": "Total",
+    "add": "Add",
+    "uploadAll": "Upload All",
+    "uploading": "Uploading...",
+    "cancel": "Cancel",
+    "fuel": "FUEL",
+    "misc": "MISC",
+    "pending": "Pending",
+    "uploaded": "✓ Done",
+    "failed": "✗ Failed",
+    "ocrProcessing": "OCR...",
+    "ocrFailed": "✗ OCR",
+    "ocrCompleted": "OCR",
+    "removeReceipt": "Remove Receipt",
+    "removeReceiptConfirm": "Are you sure you want to remove this receipt?",
+    "remove": "Remove",
+    "uploadAllExpenses": "Upload All Expenses",
+    "uploadAllConfirm": "Upload all expenses to your account?",
+    "partialUploadSuccess": "Partial Upload Success",
+    "uploadFailed": "Upload Failed",
+    "viewHistory": "View History",
+    "stayHere": "Stay Here",
+    "odometerRequired": "Odometer reading is required",
+    "odometerInvalid": "Odometer reading must be a valid positive number",
+    "odometerTooLow": "Reading cannot be less than current odometer ({{current}} km). Please enter the updated reading.",
+    "noValidReceipts": "No valid receipts to upload",
+    "enterValidOdometer": "Please enter a valid odometer reading",
+    "receiptRemovedSuccess": "Receipt removed successfully",
+    "unexpectedResponse": "Unexpected response from server",
+    "currentOdometer": " - Current odometer: {{odometer}} km",
+    "newVehicle": "(new vehicle)",
+    "updating": "(updating...)",
+    "placeholders": {
+      "amount": "0.00",
+      "date": "dd.mm.yyyy",
+      "merchant": "Store name",
+      "notes": "Additional notes (optional)",
+      "odometer": "Enter current odometer reading"
+    },
+    "messages": {
+      "failedToUpload": "Failed to upload expenses",
+      "failedToProcess": "Failed to process camera image",
+      "unknownError": "Unknown error"
+    }
   }
 }

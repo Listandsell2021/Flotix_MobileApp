@@ -84,6 +84,7 @@ export interface UpdateExpenseRequest {
 export interface SignedUrlResponse {
   uploadUrl: string;
   publicUrl: string;
+  filePath?: string;
 }
 
 export interface BatchExpenseItem {
@@ -155,7 +156,7 @@ uploadImage: async (imageUri: string): Promise<{ imageUrl: string }> => {
   try {
     console.log('🔄 Image upload requested for:', imageUri);
 
-    // Try signed URL approach first (proper S3 upload)
+    // Try signed URL approach first
     try {
       // Step 1: Get a signed URL from the backend
       const timestamp = Date.now();
@@ -168,25 +169,37 @@ uploadImage: async (imageUri: string): Promise<{ imageUrl: string }> => {
         throw new Error('Invalid signed URL response');
       }
 
-      console.log('✅ Got signed URL:', signedUrlResponse.uploadUrl.substring(0, 100) + '...');
+      console.log('✅ Got signed URL:', signedUrlResponse.uploadUrl);
 
-      // Step 2: Read the image file as blob
-      const cleanUri = imageUri.startsWith('file://') ? imageUri : `file://${imageUri}`;
+      // Step 2: Upload file directly to Firebase using signed URL
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
 
-      // Step 3: Upload directly to S3 using the signed URL
       const uploadResponse = await fetch(signedUrlResponse.uploadUrl, {
         method: 'PUT',
+        body: blob,
         headers: {
           'Content-Type': 'image/jpeg',
         },
-        body: { uri: cleanUri, type: 'image/jpeg', name: filename } as any,
       });
 
       if (!uploadResponse.ok) {
-        throw new Error(`S3 upload failed: ${uploadResponse.status}`);
+        throw new Error(`Firebase upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
       }
 
-      console.log('✅ Image uploaded to S3 successfully');
+      console.log('✅ File uploaded to Firebase successfully');
+
+      // Step 3: Make file public
+      const makePublicResponse = await apiClient.post('/api/expenses/upload-complete', {
+        filePath: signedUrlResponse.filePath,
+        publicUrl: signedUrlResponse.publicUrl,
+      });
+
+      if (!makePublicResponse.data?.success) {
+        console.warn('⚠️ Failed to make file public, but upload succeeded');
+      }
+
+      console.log('✅ Upload complete, returning public URL');
       return {
         imageUrl: signedUrlResponse.publicUrl
       };
@@ -228,23 +241,25 @@ uploadImage: async (imageUri: string): Promise<{ imageUrl: string }> => {
     console.error('❌ Image upload failed:', error);
     console.error('Error details:', error.response?.data || error.message);
 
-    // If backend upload fails, fall back to mock URL
-    if (error.message?.includes('Network Error') || error.response?.status === 404 || error.response?.status === 500) {
-      console.warn('⚠️ Backend upload failed, using mock S3 URL for development');
-
-      // Generate a mock S3 URL that looks real
-      const timestamp = Date.now();
-      const mockUrl = `https://fleet-receipts.s3.eu-central-1.amazonaws.com/receipts/${timestamp}_receipt.jpg`;
-
-      console.log('📸 Mock URL generated:', mockUrl);
-
-      return {
-        imageUrl: mockUrl
-      };
+    // Check for network/auth errors
+    if (error.message?.includes('Network Error') || error.response?.status === 401) {
+      throw new Error('Cannot connect to server. Please check your internet connection and try again.');
     }
 
-    // For other errors, still throw
-    throw new Error(`Image upload failed: ${error.message}`);
+    if (error.response?.status === 403) {
+      throw new Error('Permission denied. Please check your account permissions.');
+    }
+
+    // For development: only use mock if explicitly requested
+    if (__DEV__ && error.message?.includes('ECONNREFUSED')) {
+      console.warn('⚠️ Backend not reachable in development, using mock URL');
+      const timestamp = Date.now();
+      const mockUrl = `https://storage.googleapis.com/fleet-aa1ec.firebasestorage.app/receipts/mock/${timestamp}_receipt.jpg`;
+      return { imageUrl: mockUrl };
+    }
+
+    // For other errors, throw with useful message
+    throw new Error(`Upload failed: ${error.message}`);
   }
 },
 
@@ -318,10 +333,16 @@ uploadImage: async (imageUri: string): Promise<{ imageUrl: string }> => {
   },
 
   getSignedUrl: async (filename: string, contentType: string): Promise<SignedUrlResponse> => {
-    const response = await apiClient.post<SignedUrlResponse>('/api/expenses/signed-url', {
+    const response = await apiClient.post('/api/expenses/signed-url', {
       filename,
       contentType,
     });
+
+    // Handle backend's nested response format
+    if (response.data?.success && response.data?.data) {
+      return response.data.data; // Extract the actual URLs from nested data
+    }
+
     return response.data;
   },
 

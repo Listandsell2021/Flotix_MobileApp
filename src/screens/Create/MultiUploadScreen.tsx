@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import {
   launchCamera,
   launchImageLibrary,
@@ -28,8 +29,10 @@ import {
 import Icon from '../../components/Icon';
 import Toast from '../../components/Toast';
 import { expensesApi, BatchExpenseItem } from '../../api/expenses';
+import { vehiclesApi } from '../../api/vehicles';
 import { ocrService } from '../../services/ocrService';
 import { formatCurrency } from '../../utils/currency';
+import { formatDate, formatDateISO } from '../../utils/date';
 import { useAuth } from '../../state/authSlice';
 import RNFS from 'react-native-fs';
 
@@ -65,26 +68,38 @@ interface ReceiptData {
 
 const MultiUploadScreen: React.FC = () => {
   const navigation = useNavigation<any>();
-  const { state: __authState } = useAuth();
+  const { state: authState } = useAuth();
+  const { t } = useTranslation();
   const [receipts, setReceipts] = useState<ReceiptData[]>([]);
   const [_isProcessing, _setIsProcessing] = useState(false);
   const [isBatchUploading, setIsBatchUploading] = useState(false);
   const [commonOdometer, setCommonOdometer] = useState<string>('');
   const [showImageSourceModal, setShowImageSourceModal] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // State for current vehicle data (will be refreshed on screen load)
+  const [currentVehicle, setCurrentVehicle] = useState(authState.driverData?.assignedVehicle || null);
+  const [vehicleLoading, setVehicleLoading] = useState(false);
+  const [odometerError, setOdometerError] = useState<string>('');
+
+  // Get the vehicle's current odometer from driver data or refreshed data
+  const vehicleOdometer = currentVehicle?.currentOdometer || 0;
   const [toast, setToast] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
     visible: false,
     message: '',
     type: 'info',
   });
 
+
+  // Refresh vehicle data when screen loads to get current odometer
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 400,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+    // Always refresh vehicle data to get the latest odometer reading from database
+    if (authState.user?.assignedVehicleId) {
+      console.log('🔄 Refreshing vehicle data to get latest odometer reading from database');
+      refreshVehicleData();
+    } else {
+      console.log('⚠️ No assigned vehicle found, using cached data if available');
+    }
+  }, []);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
     setToast({ visible: true, message, type });
@@ -92,6 +107,68 @@ const MultiUploadScreen: React.FC = () => {
 
   const hideToast = () => {
     setToast({ visible: false, message: '', type: 'info' });
+  };
+
+  // Function to refresh vehicle data to get current odometer reading
+  const refreshVehicleData = async () => {
+    if (!authState.user?.assignedVehicleId) {
+      console.log('📍 No assigned vehicle to refresh');
+      return;
+    }
+
+    setVehicleLoading(true);
+    try {
+      console.log('🔄 Refreshing vehicle data for current odometer...');
+      const response = await vehiclesApi.getMyVehicle();
+      if (response.success && response.data) {
+        const oldOdometer = currentVehicle?.currentOdometer || 0;
+        const newOdometer = response.data.currentOdometer;
+
+        setCurrentVehicle(response.data);
+        console.log('✅ Vehicle data refreshed:', {
+          make: response.data.make,
+          model: response.data.model,
+          licensePlate: response.data.licensePlate,
+          previousOdometer: oldOdometer,
+          currentOdometer: newOdometer,
+          odometerChanged: oldOdometer !== newOdometer
+        });
+
+        if (oldOdometer !== newOdometer) {
+          console.log(`📊 Odometer updated: ${oldOdometer} km → ${newOdometer} km`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to refresh vehicle data:', error);
+      // Fall back to driver data from auth state if refresh fails
+      if (authState.driverData?.assignedVehicle) {
+        setCurrentVehicle(authState.driverData.assignedVehicle);
+      }
+    } finally {
+      setVehicleLoading(false);
+    }
+  };
+
+  // Validate odometer reading
+  const validateOdometer = (value: string) => {
+    if (!value || value.trim() === '') {
+      setOdometerError(t('multiUpload.odometerRequired'));
+      return false;
+    }
+
+    const reading = parseFloat(value);
+    if (isNaN(reading) || reading < 0) {
+      setOdometerError(t('multiUpload.odometerInvalid'));
+      return false;
+    }
+
+    if (currentVehicle && reading < vehicleOdometer) {
+      setOdometerError(t('multiUpload.odometerTooLow', { current: vehicleOdometer }));
+      return false;
+    }
+
+    setOdometerError('');
+    return true;
   };
 
   const processReceipt = useCallback(async (receiptId: string, imageUri: string, base64: string) => {
@@ -135,7 +212,7 @@ const MultiUploadScreen: React.FC = () => {
             editedData: {
               type: 'MISC',
               currency: 'EUR',
-              date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+              date: formatDate(new Date()), // dd.mm.yyyy format
             }
           } : r
         ));
@@ -150,7 +227,7 @@ const MultiUploadScreen: React.FC = () => {
           editedData: {
             type: 'MISC',
             currency: 'EUR',
-            date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+            date: formatDate(new Date()), // dd.mm.yyyy format
           }
         } : r
       ));
@@ -208,7 +285,7 @@ const MultiUploadScreen: React.FC = () => {
                 console.log('✅ Successfully converted camera image to base64');
               } catch (error) {
                 console.error('❌ Failed to convert camera image to base64:', error);
-                showToast('Failed to process camera image', 'error');
+                showToast(t('multiUpload.messages.failedToProcess'), 'error');
                 continue;
               }
             }
@@ -251,21 +328,19 @@ const MultiUploadScreen: React.FC = () => {
 
   const removeReceipt = (receiptId: string) => {
     Alert.alert(
-      'Remove Receipt',
-      'Are you sure you want to remove this receipt?',
+      t('multiUpload.removeReceipt'),
+      t('multiUpload.removeReceiptConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('multiUpload.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('multiUpload.remove'),
           style: 'destructive',
           onPress: () => {
-            Animated.timing(fadeAnim, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true,
-            }).start(() => {
-              setReceipts(prev => prev.filter(r => r.id !== receiptId));
-            });
+            // Remove receipt immediately without animation to avoid affecting other items
+            setReceipts(prev => prev.filter(r => r.id !== receiptId));
+
+            // Show success message
+            showToast(t('multiUpload.receiptRemovedSuccess'), 'success');
           }
         }
       ]
@@ -273,6 +348,12 @@ const MultiUploadScreen: React.FC = () => {
   };
 
   const handleBatchUpload = async () => {
+    // Validate odometer reading first
+    if (!validateOdometer(commonOdometer)) {
+      showToast(t('multiUpload.enterValidOdometer'), 'error');
+      return;
+    }
+
     const validReceipts = receipts.filter(r =>
       r.uploadStatus === 'uploaded' &&
       r.editedData?.amount &&
@@ -280,17 +361,17 @@ const MultiUploadScreen: React.FC = () => {
     );
 
     if (validReceipts.length === 0) {
-      showToast('No valid receipts to upload', 'error');
+      showToast(t('multiUpload.noValidReceipts'), 'error');
       return;
     }
 
     Alert.alert(
-      'Upload All Expenses',
-      `Upload ${validReceipts.length} expense(s)?`,
+      t('multiUpload.uploadAllExpenses'),
+      t('multiUpload.uploadAllConfirm'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('multiUpload.cancel'), style: 'cancel' },
         {
-          text: 'Upload All',
+          text: t('multiUpload.uploadAll'),
           onPress: async () => {
             setIsBatchUploading(true);
 
@@ -305,21 +386,33 @@ const MultiUploadScreen: React.FC = () => {
                   return 'OTHER';
                 };
 
-                // Ensure date is in YYYY-MM-DD format and not in the future
-                const formatDate = (dateStr?: string) => {
+                // Convert dd.mm.yyyy to ISO format for API and validate date
+                const formatDateForAPI = (dateStr?: string) => {
                   if (!dateStr) {
-                    return new Date().toISOString().split('T')[0];
+                    return formatDateISO(new Date());
                   }
 
-                  // If it's already in YYYY-MM-DD format, return as is
-                  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                    // Check if it's not in the future
-                    const inputDate = new Date(dateStr);
+                  // If it's in dd.mm.yyyy format, convert to ISO
+                  if (/^\d{2}\.\d{2}\.\d{4}$/.test(dateStr)) {
+                    const [day, month, year] = dateStr.split('.');
+                    const inputDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                     const today = new Date();
                     today.setHours(23, 59, 59, 999); // End of today
 
                     if (inputDate > today) {
-                      return new Date().toISOString().split('T')[0];
+                      return formatDateISO(new Date());
+                    }
+                    return formatDateISO(inputDate);
+                  }
+
+                  // If it's already in YYYY-MM-DD format, return as is
+                  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                    const inputDate = new Date(dateStr);
+                    const today = new Date();
+                    today.setHours(23, 59, 59, 999);
+
+                    if (inputDate > today) {
+                      return formatDateISO(new Date());
                     }
                     return dateStr;
                   }
@@ -332,19 +425,19 @@ const MultiUploadScreen: React.FC = () => {
                     today.setHours(23, 59, 59, 999);
 
                     if (inputDate > today) {
-                      return new Date().toISOString().split('T')[0];
+                      return formatDateISO(new Date());
                     }
                     return datePart;
                   }
 
-                  return new Date().toISOString().split('T')[0];
+                  return formatDateISO(new Date());
                 };
 
                 return {
                   type: receipt.editedData?.type || 'MISC',
                   amountFinal: receipt.editedData?.amount || 0,
-                  currency: receipt.editedData?.currency || 'EUR',
-                  date: formatDate(receipt.editedData?.date),
+                  currency: 'EUR',
+                  date: formatDateForAPI(receipt.editedData?.date),
                   receiptUrl: receipt.imageUrl || '',
                   merchant: receipt.editedData?.merchant,
                   category: mapCategory(receipt.editedData?.category),
@@ -374,15 +467,15 @@ const MultiUploadScreen: React.FC = () => {
                     // Show appropriate message based on success/failure ratio
                     if (totalFailed > 0) {
                       Alert.alert(
-                        'Partial Upload Success',
+                        t('multiUpload.partialUploadSuccess'),
                         `${totalSuccessful} expense(s) uploaded successfully.\n\n${totalFailed} failed:\n${errorMessages}`,
                         [
                           {
-                            text: 'View History',
+                            text: t('multiUpload.viewHistory'),
                             onPress: () => navigation.navigate('History')
                           },
                           {
-                            text: 'Stay Here',
+                            text: t('multiUpload.stayHere'),
                             style: 'cancel'
                           }
                         ]
@@ -413,17 +506,17 @@ const MultiUploadScreen: React.FC = () => {
                   ).join('\n') || 'Unknown error';
 
                   Alert.alert(
-                    'Upload Failed',
+                    t('multiUpload.uploadFailed'),
                     `All expenses failed to upload:\n\n${errorMessages}`,
                     [{ text: 'OK' }]
                   );
                 }
               } else {
-                showToast('Unexpected response from server', 'error');
+                showToast(t('multiUpload.unexpectedResponse'), 'error');
               }
             } catch (error: any) {
               setIsBatchUploading(false);
-              showToast(error.message || 'Failed to upload expenses', 'error');
+              showToast(error.message || t('multiUpload.messages.failedToUpload'), 'error');
             }
           }
         }
@@ -434,13 +527,13 @@ const MultiUploadScreen: React.FC = () => {
   const renderReceiptItem = ({ item, index }: { item: ReceiptData; index: number }) => {
     const isItemProcessing = item.uploadStatus === 'uploading' || item.ocrStatus === 'processing';
     const amount = item.editedData?.amount || 0;
-    const currency = item.editedData?.currency || 'EUR';
+    const currency = 'EUR';
     const type = item.editedData?.type || 'MISC';
     const hasError = item.uploadStatus === 'failed' || item.ocrStatus === 'failed';
     const isReady = item.uploadStatus === 'uploaded' && item.ocrStatus === 'completed';
 
     return (
-      <Animated.View style={[styles.receiptCard, { opacity: fadeAnim }]}>
+      <View style={styles.receiptCard}>
         <TouchableOpacity
           style={styles.cardHeader}
           onPress={() => !isItemProcessing && toggleExpandReceipt(item.id)}
@@ -471,10 +564,14 @@ const MultiUploadScreen: React.FC = () => {
                     size={10}
                     color={type === 'FUEL' ? '#92400e' : '#581c87'}
                   />
-                  <Text style={[
-                    styles.typeText,
-                    type === 'FUEL' ? styles.fuelText : styles.miscText
-                  ]}>{type}</Text>
+                  <Text
+                    style={[
+                      styles.typeText,
+                      type === 'FUEL' ? styles.fuelText : styles.miscText
+                    ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >{t(`multiUpload.${type.toLowerCase()}`)}</Text>
                 </View>
 
                 {isReady && (
@@ -505,9 +602,9 @@ const MultiUploadScreen: React.FC = () => {
                   styles.statusPending
                 ]}>
                   <Text style={styles.statusPillText}>
-                    {item.uploadStatus === 'uploaded' ? '✓ Uploaded' :
-                     item.uploadStatus === 'uploading' ? 'Uploading...' :
-                     item.uploadStatus === 'failed' ? '✗ Failed' : 'Pending'}
+                    {item.uploadStatus === 'uploaded' ? t('multiUpload.uploaded') :
+                     item.uploadStatus === 'uploading' ? t('multiUpload.uploading') :
+                     item.uploadStatus === 'failed' ? t('multiUpload.failed') : t('multiUpload.pending')}
                   </Text>
                 </View>
 
@@ -520,9 +617,9 @@ const MultiUploadScreen: React.FC = () => {
                     styles.statusPending
                   ]}>
                     <Text style={styles.statusPillText}>
-                      {item.ocrStatus === 'completed' ? '✓ OCR' :
-                       item.ocrStatus === 'processing' ? 'OCR...' :
-                       item.ocrStatus === 'failed' ? '✗ OCR' : 'OCR'}
+                      {item.ocrStatus === 'completed' ? t('multiUpload.ocrCompleted') :
+                       item.ocrStatus === 'processing' ? t('multiUpload.ocrProcessing') :
+                       item.ocrStatus === 'failed' ? t('multiUpload.ocrFailed') : t('multiUpload.ocrCompleted')}
                     </Text>
                   </View>
                 )}
@@ -539,7 +636,7 @@ const MultiUploadScreen: React.FC = () => {
               }}
               disabled={isItemProcessing}
             >
-              <Icon name="edit" size={16} color={isItemProcessing ? '#cbd5e1' : '#3b82f6'} />
+              <Icon name="edit" size={16} color={isItemProcessing ? '#cbd5e1' : '#3488cc'} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -562,14 +659,19 @@ const MultiUploadScreen: React.FC = () => {
             {
               maxHeight: item.animatedHeight?.interpolate({
                 inputRange: [0, 1],
-                outputRange: [0, 500]
+                outputRange: [0, 800]
               })
             }
           ]}>
-            <View style={styles.editForm}>
+            <ScrollView
+              style={styles.editForm}
+              contentContainerStyle={styles.editFormContent}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
+            >
               <View style={styles.formRow}>
                 <View style={styles.formField}>
-                  <Text style={styles.fieldLabel}>Type</Text>
+                  <Text style={styles.fieldLabel}>{t('multiUpload.type')}</Text>
                   <View style={styles.segmentControl}>
                     <TouchableOpacity
                       style={[
@@ -583,10 +685,14 @@ const MultiUploadScreen: React.FC = () => {
                         size={14}
                         color={item.editedData?.type === 'FUEL' ? '#ffffff' : '#64748b'}
                       />
-                      <Text style={[
-                        styles.segmentText,
-                        item.editedData?.type === 'FUEL' && styles.segmentTextActive
-                      ]}>Fuel</Text>
+                      <Text
+                        style={[
+                          styles.segmentText,
+                          item.editedData?.type === 'FUEL' && styles.segmentTextActive
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >{t('expense.fuel')}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -601,16 +707,20 @@ const MultiUploadScreen: React.FC = () => {
                         size={14}
                         color={item.editedData?.type === 'MISC' ? '#ffffff' : '#64748b'}
                       />
-                      <Text style={[
-                        styles.segmentText,
-                        item.editedData?.type === 'MISC' && styles.segmentTextActive
-                      ]}>Misc</Text>
+                      <Text
+                        style={[
+                          styles.segmentText,
+                          item.editedData?.type === 'MISC' && styles.segmentTextActive
+                        ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >{t('expense.misc')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
 
                 <View style={styles.formField}>
-                  <Text style={styles.fieldLabel}>Amount *</Text>
+                  <Text style={styles.fieldLabel}>{t('multiUpload.amountRequired')}</Text>
                   <TextInput
                     style={styles.textInput}
                     value={item.editedData?.amount?.toString() || ''}
@@ -619,64 +729,51 @@ const MultiUploadScreen: React.FC = () => {
                       updateReceiptData(item.id, 'amount', parsedAmount);
                     }}
                     keyboardType="decimal-pad"
-                    placeholder="0.00"
-                    placeholderTextColor="#94a3b8"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.formRow}>
-                <View style={[styles.formField, styles.flexPoint4]}>
-                  <Text style={styles.fieldLabel}>Currency</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={item.editedData?.currency || 'EUR'}
-                    onChangeText={(text) => updateReceiptData(item.id, 'currency', text)}
-                    placeholder="EUR"
-                    placeholderTextColor="#94a3b8"
-                  />
-                </View>
-
-                <View style={[styles.formField, styles.flexPoint6]}>
-                  <Text style={styles.fieldLabel}>Date</Text>
-                  <TextInput
-                    style={styles.textInput}
-                    value={item.editedData?.date || new Date().toISOString().split('T')[0]}
-                    onChangeText={(text) => updateReceiptData(item.id, 'date', text)}
-                    placeholder="YYYY-MM-DD"
+                    placeholder={t('multiUpload.placeholders.amount')}
                     placeholderTextColor="#94a3b8"
                   />
                 </View>
               </View>
 
               <View style={styles.formField}>
-                <Text style={styles.fieldLabel}>Merchant</Text>
+                <Text style={styles.fieldLabel}>{t('multiUpload.date')}</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={item.editedData?.date || formatDate(new Date())}
+                  onChangeText={(text) => updateReceiptData(item.id, 'date', text)}
+                  placeholder={t('multiUpload.placeholders.date')}
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.formField}>
+                <Text style={styles.fieldLabel}>{t('multiUpload.merchant')}</Text>
                 <TextInput
                   style={styles.textInput}
                   value={item.editedData?.merchant || ''}
                   onChangeText={(text) => updateReceiptData(item.id, 'merchant', text)}
-                  placeholder="Store name"
+                  placeholder={t('multiUpload.placeholders.merchant')}
                   placeholderTextColor="#94a3b8"
                 />
               </View>
 
 
               <View style={styles.formField}>
-                <Text style={styles.fieldLabel}>Notes</Text>
+                <Text style={styles.fieldLabel}>{t('multiUpload.notes')}</Text>
                 <TextInput
                   style={[styles.textInput, styles.textArea]}
                   value={item.editedData?.notes || ''}
                   onChangeText={(text) => updateReceiptData(item.id, 'notes', text)}
-                  placeholder="Additional notes (optional)"
+                  placeholder={t('multiUpload.placeholders.notes')}
                   placeholderTextColor="#94a3b8"
                   multiline
                   numberOfLines={2}
                 />
               </View>
-            </View>
+            </ScrollView>
           </Animated.View>
         )}
-      </Animated.View>
+      </View>
     );
   };
 
@@ -696,8 +793,8 @@ const MultiUploadScreen: React.FC = () => {
           </TouchableOpacity>
 
           <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>Batch Upload</Text>
-            <Text style={styles.headerSubtitle}>Process multiple receipts</Text>
+            <Text style={styles.headerTitle}>{t('multiUpload.title')}</Text>
+            <Text style={styles.headerSubtitle}>{t('multiUpload.subtitle')}</Text>
           </View>
 
           <View style={styles.headerRight}>
@@ -713,13 +810,13 @@ const MultiUploadScreen: React.FC = () => {
           <ScrollView contentContainerStyle={styles.emptyContainer}>
             <View style={styles.emptyIllustration}>
               <View style={styles.illustrationCircle}>
-                <Icon name="stack" size={48} color="#3b82f6" />
+                <Icon name="stack" size={48} color="#3488cc" />
               </View>
             </View>
 
-            <Text style={styles.emptyTitle}>No Receipts Yet</Text>
+            <Text style={styles.emptyTitle}>{t('multiUpload.emptyTitle')}</Text>
             <Text style={styles.emptyDescription}>
-              Upload multiple receipts to process them efficiently in batch
+              {t('multiUpload.emptyDescription')}
             </Text>
 
             <View style={styles.uploadOptions}>
@@ -731,8 +828,8 @@ const MultiUploadScreen: React.FC = () => {
                   <Icon name="image" size={20} color="#ffffff" />
                 </View>
                 <View style={styles.uploadButtonContent}>
-                  <Text style={styles.uploadButtonTitle}>Choose from Gallery</Text>
-                  <Text style={styles.uploadButtonSubtitle}>Select up to 10 images</Text>
+                  <Text style={styles.uploadButtonTitle}>{t('multiUpload.chooseFromGallery')}</Text>
+                  <Text style={styles.uploadButtonSubtitle}>{t('multiUpload.galleryDescription')}</Text>
                 </View>
                 <Icon name="chevron-right" size={20} color="#ffffff" />
               </TouchableOpacity>
@@ -742,13 +839,13 @@ const MultiUploadScreen: React.FC = () => {
                 onPress={() => pickMultipleImages('camera')}
               >
                 <View style={[styles.uploadButtonIcon, styles.secondaryIcon]}>
-                  <Icon name="camera" size={20} color="#3b82f6" />
+                  <Icon name="camera" size={20} color="#3488cc" />
                 </View>
                 <View style={styles.uploadButtonContent}>
-                  <Text style={styles.secondaryButtonTitle}>Take Photo</Text>
-                  <Text style={styles.secondaryButtonSubtitle}>Capture a new receipt</Text>
+                  <Text style={styles.secondaryButtonTitle}>{t('multiUpload.takePhoto')}</Text>
+                  <Text style={styles.secondaryButtonSubtitle}>{t('multiUpload.takePhotoDescription')}</Text>
                 </View>
-                <Icon name="chevron-right" size={20} color="#3b82f6" />
+                <Icon name="chevron-right" size={20} color="#3488cc" />
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -758,8 +855,9 @@ const MultiUploadScreen: React.FC = () => {
               data={receipts}
               renderItem={({ item, index }) => renderReceiptItem({ item, index })}
               keyExtractor={item => item.id}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[styles.listContent, { paddingBottom: 500 }]}
               showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
             />
 
             {/* Modern Bottom Action Bar */}
@@ -768,18 +866,45 @@ const MultiUploadScreen: React.FC = () => {
               <View style={styles.odometerSection}>
                 <View style={styles.odometerInputContainer}>
                   <View style={styles.odometerIconBox}>
-                    <Icon name="car" size={18} color="#3b82f6" />
+                    <Icon name="car" size={18} color="#3488cc" />
                   </View>
                   <View style={styles.odometerFieldFull}>
-                    <Text style={styles.odometerLabel}>Vehicle Odometer Reading</Text>
+                    <Text style={styles.odometerLabel}>{t('multiUpload.vehicleOdometerReading')}</Text>
                     <TextInput
-                      style={styles.odometerInput}
+                      style={[styles.odometerInput, odometerError && styles.odometerInputError]}
                       value={commonOdometer}
-                      onChangeText={setCommonOdometer}
+                      onChangeText={(text) => {
+                        setCommonOdometer(text);
+                        // Clear error when user starts typing
+                        if (odometerError) {
+                          setOdometerError('');
+                        }
+                      }}
+                      onBlur={() => {
+                        // Validate when user finishes editing
+                        if (commonOdometer) {
+                          validateOdometer(commonOdometer);
+                        }
+                      }}
                       keyboardType="numeric"
-                      placeholder="Enter current kilometers"
+                      placeholder={t('multiUpload.placeholders.odometer')}
                       placeholderTextColor="#94a3b8"
                     />
+
+                    {/* Show vehicle info hint if available */}
+                    {currentVehicle && (
+                      <Text style={styles.vehicleHint}>
+                        
+                        {t('multiUpload.currentOdometer', { odometer: vehicleOdometer })}
+                        {vehicleOdometer === 0 && ` ${t('multiUpload.newVehicle')}`}
+                        {vehicleLoading && ` ${t('multiUpload.updating')}`}
+                      </Text>
+                    )}
+
+                    {/* Show error message if validation fails */}
+                    {odometerError && (
+                      <Text style={styles.odometerError}>{odometerError}</Text>
+                    )}
                   </View>
                 </View>
               </View>
@@ -789,7 +914,7 @@ const MultiUploadScreen: React.FC = () => {
                   <Text style={styles.statValue}>
                     {receipts.filter(r => r.uploadStatus === 'uploaded').length}
                   </Text>
-                  <Text style={styles.statLabel}>Ready</Text>
+                  <Text style={styles.statLabel}>{t('multiUpload.ready')}</Text>
                 </View>
 
                 <View style={styles.statDivider} />
@@ -801,7 +926,7 @@ const MultiUploadScreen: React.FC = () => {
                       'EUR'
                     )}
                   </Text>
-                  <Text style={styles.statLabel}>Total</Text>
+                  <Text style={styles.statLabel}>{t('multiUpload.total')}</Text>
                 </View>
               </View>
 
@@ -810,8 +935,8 @@ const MultiUploadScreen: React.FC = () => {
                   style={styles.addMoreButton}
                   onPress={() => setShowImageSourceModal(true)}
                 >
-                  <Icon name="plus" size={18} color="#3b82f6" />
-                  <Text style={styles.addMoreText}>Add</Text>
+                  <Icon name="plus" size={18} color="#3488cc" />
+                  <Text style={styles.addMoreText}>{t('multiUpload.add')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -828,7 +953,7 @@ const MultiUploadScreen: React.FC = () => {
                     <Icon name="upload" size={18} color="#ffffff" />
                   )}
                   <Text style={styles.uploadAllText}>
-                    {isBatchUploading ? 'Uploading...' : 'Upload All'}
+                    {isBatchUploading ? t('multiUpload.uploading') : t('multiUpload.uploadAll')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -852,19 +977,19 @@ const MultiUploadScreen: React.FC = () => {
           <View style={styles.modalContent}>
             <View style={styles.modalHandle} />
 
-            <Text style={styles.modalTitle}>Add Receipts</Text>
-            <Text style={styles.modalSubtitle}>Choose how to add your receipts</Text>
+            <Text style={styles.modalTitle}>{t('multiUpload.addReceipts')}</Text>
+            <Text style={styles.modalSubtitle}>{t('multiUpload.addReceiptsSubtitle')}</Text>
 
             <TouchableOpacity
               style={styles.modalOption}
               onPress={() => pickMultipleImages('camera')}
             >
               <View style={styles.modalOptionIcon}>
-                <Icon name="camera" size={24} color="#3b82f6" />
+                <Icon name="camera" size={24} color="#3488cc" />
               </View>
               <View style={styles.modalOptionContent}>
-                <Text style={styles.modalOptionTitle}>Take Photo</Text>
-                <Text style={styles.modalOptionDescription}>Use camera to capture receipt</Text>
+                <Text style={styles.modalOptionTitle}>{t('multiUpload.takePhoto')}</Text>
+                <Text style={styles.modalOptionDescription}>{t('multiUpload.useCamera')}</Text>
               </View>
               <Icon name="chevron-right" size={20} color="#94a3b8" />
             </TouchableOpacity>
@@ -877,8 +1002,8 @@ const MultiUploadScreen: React.FC = () => {
                 <Icon name="image" size={24} color="#8b5cf6" />
               </View>
               <View style={styles.modalOptionContent}>
-                <Text style={styles.modalOptionTitle}>Choose from Gallery</Text>
-                <Text style={styles.modalOptionDescription}>Select up to 10 images</Text>
+                <Text style={styles.modalOptionTitle}>{t('multiUpload.chooseFromGallery')}</Text>
+                <Text style={styles.modalOptionDescription}>{t('multiUpload.galleryDescription')}</Text>
               </View>
               <Icon name="chevron-right" size={20} color="#94a3b8" />
             </TouchableOpacity>
@@ -887,7 +1012,7 @@ const MultiUploadScreen: React.FC = () => {
               style={styles.modalCancelButton}
               onPress={() => setShowImageSourceModal(false)}
             >
-              <Text style={styles.modalCancelText}>Cancel</Text>
+              <Text style={styles.modalCancelText}>{t('multiUpload.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -952,7 +1077,7 @@ const styles = StyleSheet.create({
     minWidth: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#3488cc',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 8,
@@ -999,11 +1124,11 @@ const styles = StyleSheet.create({
   primaryUploadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#3488cc',
     borderRadius: 16,
     padding: 16,
     elevation: 4,
-    shadowColor: '#3b82f6',
+    shadowColor: '#3488cc',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -1093,7 +1218,7 @@ const styles = StyleSheet.create({
   indexText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#3b82f6',
+    color: '#3488cc',
   },
   imageContainer: {
     position: 'relative',
@@ -1127,10 +1252,12 @@ const styles = StyleSheet.create({
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
     borderRadius: 6,
-    gap: 4,
+    gap: 3,
+    flexShrink: 1,
+    maxWidth: '60%',
   },
   fuelBadge: {
     backgroundColor: '#fef3c7',
@@ -1139,10 +1266,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3e8ff',
   },
   typeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
+    flexShrink: 1,
+    textAlign: 'center',
   },
   fuelText: {
     color: '#92400e',
@@ -1227,6 +1356,10 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 0,
   },
+  editFormContent: {
+    paddingBottom: 20,
+    flexGrow: 1,
+  },
   formRow: {
     flexDirection: 'row',
     gap: 12,
@@ -1253,17 +1386,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     borderRadius: 8,
-    gap: 6,
+    gap: 4,
+    minWidth: 0, // Allow text to wrap if needed
   },
   segmentActive: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#3488cc',
   },
   segmentText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#64748b',
+    textAlign: 'center',
+    flexShrink: 1,
   },
   segmentTextActive: {
     color: '#ffffff',
@@ -1281,12 +1418,6 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 80,
     textAlignVertical: 'top',
-  },
-  flexPoint4: {
-    flex: 0.4,
-  },
-  flexPoint6: {
-    flex: 0.6,
   },
   bottomBar: {
     position: 'absolute',
@@ -1389,19 +1520,19 @@ const styles = StyleSheet.create({
   addMoreText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#3b82f6',
+    color: '#3488cc',
   },
   uploadAllButton: {
     flex: 0.65,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#3488cc',
     borderRadius: 14,
     paddingVertical: 14,
     gap: 8,
     elevation: 3,
-    shadowColor: '#3b82f6',
+    shadowColor: '#3488cc',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -1499,6 +1630,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#475569',
+  },
+  odometerInputError: {
+    borderColor: '#ef4444',
+    borderWidth: 1,
+  },
+  vehicleHint: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 8,
+    fontStyle: 'italic',
+  },
+  odometerError: {
+    fontSize: 12,
+    color: '#ef4444',
+    marginTop: 4,
+    fontWeight: '500',
   },
 });
 

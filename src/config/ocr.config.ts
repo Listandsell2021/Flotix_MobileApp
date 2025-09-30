@@ -30,7 +30,13 @@ export const generateMockOCRData = (index: number = 0) => {
     {
       amount: 45.50,
       currency: 'EUR',
-      date: new Date().toISOString().split('T')[0],
+      date: (() => {
+        const today = new Date();
+        const day = today.getDate().toString().padStart(2, '0');
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const year = today.getFullYear();
+        return `${day}.${month}.${year}`;
+      })(),
       merchant: 'Shell Gas Station',
       category: 'fuel',
       type: 'FUEL' as const,
@@ -38,7 +44,13 @@ export const generateMockOCRData = (index: number = 0) => {
     {
       amount: 32.80,
       currency: 'EUR',
-      date: new Date().toISOString().split('T')[0],
+      date: (() => {
+        const today = new Date();
+        const day = today.getDate().toString().padStart(2, '0');
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const year = today.getFullYear();
+        return `${day}.${month}.${year}`;
+      })(),
       merchant: 'BP Service Station',
       category: 'fuel',
       type: 'FUEL' as const,
@@ -46,7 +58,13 @@ export const generateMockOCRData = (index: number = 0) => {
     {
       amount: 15.00,
       currency: 'EUR',
-      date: new Date().toISOString().split('T')[0],
+      date: (() => {
+        const today = new Date();
+        const day = today.getDate().toString().padStart(2, '0');
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const year = today.getFullYear();
+        return `${day}.${month}.${year}`;
+      })(),
       merchant: 'City Parking',
       category: 'parking',
       type: 'MISC' as const,
@@ -54,7 +72,13 @@ export const generateMockOCRData = (index: number = 0) => {
     {
       amount: 8.50,
       currency: 'EUR',
-      date: new Date().toISOString().split('T')[0],
+      date: (() => {
+        const today = new Date();
+        const day = today.getDate().toString().padStart(2, '0');
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const year = today.getFullYear();
+        return `${day}.${month}.${year}`;
+      })(),
       merchant: 'Highway Toll',
       category: 'toll',
       type: 'MISC' as const,
@@ -62,7 +86,13 @@ export const generateMockOCRData = (index: number = 0) => {
     {
       amount: 125.00,
       currency: 'EUR',
-      date: new Date().toISOString().split('T')[0],
+      date: (() => {
+        const today = new Date();
+        const day = today.getDate().toString().padStart(2, '0');
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const year = today.getFullYear();
+        return `${day}.${month}.${year}`;
+      })(),
       merchant: 'AutoService Center',
       category: 'repair',
       type: 'MISC' as const,
