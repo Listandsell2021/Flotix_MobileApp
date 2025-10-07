@@ -7,6 +7,8 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  Modal,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
@@ -20,6 +22,7 @@ import Toast from "../../components/Toast";
 import ReceiptPreview from "../../components/ReceiptPreview";
 import { HistoryStackParamList } from "../../navigation/HistoryStack";
 import { useTranslation } from "react-i18next";
+import { EditExpenseModal } from "../../components/EditModal";
 
 type ExpenseDetailScreenRouteProp = RouteProp<
   HistoryStackParamList,
@@ -34,6 +37,15 @@ const ExpenseDetailScreen: React.FC = () => {
   const { t } = useTranslation();
   const route = useRoute<ExpenseDetailScreenRouteProp>();
   const navigation = useNavigation<ExpenseDetailScreenNavigationProp>();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<{
+    amountFinal?: number;
+    merchant?: string;
+    date?: Date;
+    odometerReading?: number;
+  }>({});
+
+  // const [editForm, setEditForm] = useState<Partial<Expense>>({});
   const { expenseId } = route.params;
 
   const [expense, setExpense] = useState<Expense | null>(null);
@@ -61,7 +73,14 @@ const ExpenseDetailScreen: React.FC = () => {
       const foundExpense = response.items.find(
         (exp) => (exp._id || exp.id) === expenseId
       );
+      console.log(foundExpense);
       setExpense(foundExpense || null);
+      setSelectedExpense({
+        amountFinal: foundExpense?.amountFinal,
+        date: new Date(foundExpense?.date as string),
+        merchant: foundExpense?.merchant,
+        odometerReading: foundExpense?.odometerReading,
+      });
     } catch (error) {
       console.error("Failed to load expense:", error);
       showToast("Failed to load expense details", "error");
@@ -81,8 +100,9 @@ const ExpenseDetailScreen: React.FC = () => {
     setToast({ visible: false, message: "", type: "info" });
   };
 
-  const handleEdit = () => {
-    showToast("Edit functionality not implemented yet", "info");
+  const handleEdit = async () => {
+    setShowEditModal(true);
+    // showToast("Edit functionality not implemented yet", "info");
   };
 
   const handleDelete = () => {
@@ -93,13 +113,67 @@ const ExpenseDetailScreen: React.FC = () => {
       {
         text: t("common.delete"),
         style: "destructive",
-        onPress: () => {
-          showToast("Delete functionality not implemented yet", "info");
+        onPress: async () => {
+          try {
+            if (expense._id) {
+              console.log("deleting expense");
+              const response = await expensesApi.delete(expense._id);
+              console.log(response);
+              console.log("expense deleted");
+              showToast(t("expenses.expenseDeleted"), "success");
+              setTimeout(() => {
+                navigation.replace("ExpensesList");
+              }, 500);
+            } else {
+              showToast("Expense id not found", "error");
+            }
+          } catch (error: any) {
+            // console.log(error.response);
+            if (error.response.status === 404) {
+              showToast(t("expense.notFound"), "error");
+            } else if (error.response.status === 403) {
+              showToast(t("errors.timeLimitExceeded"), "error");
+            } else {
+              showToast(t("errors.deleteExpense"), "error");
+            }
+          }
         },
       },
     ]);
   };
 
+  const handleSave = async (updatedData: any) => {
+    try {
+      if (!updatedData && !expense?._id) return;
+      const obj = {
+        amountFinal: updatedData.amountFinal,
+        merchant: updatedData.merchant,
+        date: updatedData.date.toISOString(),
+        odometerReading: updatedData.odometerReading,
+      };
+      console.log(obj);
+      setLoading(true);
+      const response = await expensesApi.update(expense?._id as string, obj);
+      console.log("updated data ", response.data);
+
+      setExpense(response.data);
+      setShowEditModal(false);
+      showToast(t("expenses.expenseUpdated"), "success");
+    } catch (error: any) {
+      if (error.response.status === 404) {
+        showToast(t("expense.notFound"), "error");
+      } else if (error.response.status === 403) {
+        showToast(t("errors.timeLimitExceeded"), "error");
+      } else {
+        showToast(error.message || "Failed to update", "error");
+      }
+      console.error("Update failed", error);
+    } finally {
+      setLoading(false);
+      setShowEditModal(false);
+    }
+    setSelectedExpense(updatedData);
+  };
   const DetailRow: React.FC<{ label: string; value: string; style?: any }> = ({
     label,
     value,
@@ -126,7 +200,7 @@ const ExpenseDetailScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Expense not found</Text>
+          <Text style={styles.errorText}>{t("expense.notFound")}</Text>
           <Button
             title="Go Back"
             onPress={() => navigation.goBack()}
@@ -149,7 +223,7 @@ const ExpenseDetailScreen: React.FC = () => {
           <View style={styles.header}>
             <View style={styles.headerInfo}>
               <Text style={styles.expenseType}>
-                {t(`expense.${expense.type.toLowerCase()}`)}
+                {t(`expense.${expense.type?.toLowerCase()}`)}
               </Text>
               <Text style={styles.expenseDate}>
                 {formatDisplayDate(expense.date)}
@@ -302,6 +376,13 @@ const ExpenseDetailScreen: React.FC = () => {
         message={toast.message}
         type={toast.type}
         onHide={hideToast}
+      />
+
+      <EditExpenseModal
+        visible={showEditModal}
+        initialValues={selectedExpense}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSave}
       />
     </SafeAreaView>
   );
@@ -470,6 +551,43 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     marginTop: theme.spacing.sm,
     lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  modalContainer: {
+    width: "100%",
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.medium,
+    padding: theme.spacing.lg,
+  },
+  modalTitle: {
+    fontSize: theme.fontSize.title,
+    fontWeight: "bold",
+    marginBottom: theme.spacing.md,
+    color: theme.colors.text,
+  },
+  modalLabel: {
+    fontSize: theme.fontSize.body,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.md,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.borderRadius.small,
+    padding: theme.spacing.sm,
+    marginTop: theme.spacing.xs,
+    color: theme.colors.text,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    marginTop: theme.spacing.lg,
+    justifyContent: "space-between",
   },
 });
 

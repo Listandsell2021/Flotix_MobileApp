@@ -24,7 +24,7 @@ import Toast from "../../components/Toast";
 import Icon from "../../components/Icon";
 
 const ExpensesListScreen: React.FC = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
   const { state, setExpenses, setLoading, setError } = useExpense();
   const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
@@ -96,7 +96,6 @@ const ExpensesListScreen: React.FC = () => {
       const response = await expensesApi.getList(params);
       setExpenses(response.items);
     } catch (error) {
-
       console.error("Load expenses error:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("errors.loadExpenses");
@@ -263,7 +262,6 @@ const ExpensesListScreen: React.FC = () => {
 
             <View style={styles.expenseMainInfo}>
               <View style={styles.expenseTopRow}>
-
                 <Text style={styles.expenseType}>
                   {expense.type}
                   {/* {t(`expense.${expense.type?.toLowerCase()}`)} */}
@@ -312,14 +310,11 @@ const ExpensesListScreen: React.FC = () => {
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-
-     <Text style={styles.emptyStateTitle}>{t('expenses.empty.title')}</Text>
+      <Text style={styles.emptyStateTitle}>{t("expenses.empty.title")}</Text>
       <Text style={styles.emptyStateText}>
         {filters.type
-            ? t('expenses.empty.filtered', { type: filters.type.toLowerCase() })
-          : t('expenses.empty.subtitle')}
-
-     
+          ? t("expenses.empty.filtered", { type: filters.type.toLowerCase() })
+          : t("expenses.empty.subtitle")}
       </Text>
     </View>
   );
@@ -387,7 +382,6 @@ const ExpensesListScreen: React.FC = () => {
             ]}
             onPress={() => handleFilterChange("")}
           >
-
             <Text
               style={[
                 styles.quickFilterText,
@@ -395,7 +389,6 @@ const ExpensesListScreen: React.FC = () => {
               ]}
             >
               {t("expenses.filter.allTypes")}
-
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -454,7 +447,7 @@ const ExpensesListScreen: React.FC = () => {
           </TouchableOpacity>
         </ScrollView>
 
-        {activeFiltersCount > 0 && (
+        {/* {activeFiltersCount > 0 && (
           <TouchableOpacity
             style={styles.clearFiltersButton}
             onPress={clearFilters}
@@ -463,39 +456,72 @@ const ExpensesListScreen: React.FC = () => {
               {t("expenses.filter.clear")} ({activeFiltersCount})
             </Text>
           </TouchableOpacity>
-        )}
+        )} */}
       </View>
 
       {/* Results Summary */}
+
       <View style={styles.resultsContainer}>
         <Text style={styles.resultsText}>
           {filteredExpenses.length} expense
           {filteredExpenses.length !== 1 ? "s" : ""} found
         </Text>
-        <TouchableOpacity
-          style={styles.sortButton}
-          onPress={() => {
-            setFilters((prev) => ({
-              ...prev,
-              sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
-            }));
+        <View
+          style={{
+            flexDirection: "row",
+            gap: 10,
+            alignItems: "center",
           }}
         >
-          <View style={styles.sortButtonContent}>
-            <Text style={styles.sortButtonText}>{filters.sortBy}</Text>
-            <Animated.View
-              style={{
-                transform: [{ rotate }], // Apply animated rotation
-              }}
+          <TouchableOpacity
+            style={styles.sortButton}
+            onPress={() => {
+              setFilters((prev) => ({
+                ...prev,
+                sortOrder: prev.sortOrder === "asc" ? "desc" : "asc",
+              }));
+            }}
+          >
+            <View style={styles.sortButtonContent}>
+              <Text style={styles.sortButtonText}>
+                {t("expense.date")}
+                {/* {filters.sortBy} */}
+              </Text>
+              <Animated.View
+                style={{
+                  transform: [{ rotate }], // Apply animated rotation
+                }}
+              >
+                <Icon
+                  name="arrow-right" // You can keep this static or change based on the state
+                  size={12}
+                  color="black" // Adjust color as needed
+                />
+              </Animated.View>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.clearFiltersButton}
+            onPress={clearFilters}
+            disabled={activeFiltersCount === 0}
+          >
+            <Text
+              style={[
+                styles.clearFiltersText,
+                {
+                  color:
+                    activeFiltersCount > 0
+                      ? theme.colors.error
+                      : theme.colors.textSecondary,
+                },
+              ]}
             >
-              <Icon
-                name="arrow-right" // You can keep this static or change based on the state
-                size={12}
-                color="black" // Adjust color as needed
-              />
-            </Animated.View>
-          </View>
-        </TouchableOpacity>
+              {t("expenses.filter.clear")} ({activeFiltersCount})
+            </Text>
+          </TouchableOpacity>
+          {/* {activeFiltersCount > 0 && (
+          )} */}
+        </View>
       </View>
 
       {/* Expenses List */}
@@ -827,12 +853,12 @@ const styles = StyleSheet.create({
     color: theme.colors.surface,
   },
   clearFiltersButton: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
+    // paddingHorizontal: theme.spacing.md,
+    // paddingVertical: theme.spacing.sm,
   },
   clearFiltersText: {
     fontSize: theme.fontSize.small,
-    color: theme.colors.error,
+    // color: theme.colors.error,
     fontWeight: "500",
   },
 

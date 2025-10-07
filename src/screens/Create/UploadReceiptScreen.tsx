@@ -5,24 +5,24 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-
   TouchableOpacity,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StackNavigationProp } from '@react-navigation/stack';
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { useTranslation } from "react-i18next";
-import { CreateStackParamList } from '../../navigation/CreateStack';
-import { theme } from '../../styles/theme';
-import { useExpense } from '../../state/expenseSlice';
-import ImagePicker from '../../components/ImagePicker';
-import Button from '../../components/Button';
-import Toast from '../../components/Toast';
-import Icon from '../../components/Icon';
-import { ocrService, ExpenseDetails } from '../../services/ocrService';
-import { formatCurrency } from '../../utils/currency';
-import { formatDisplayDate } from '../../utils/date';
-import RNFS from 'react-native-fs';
-
+import { CreateStackParamList } from "../../navigation/CreateStack";
+import { theme } from "../../styles/theme";
+import { useExpense } from "../../state/expenseSlice";
+import ImagePicker from "../../components/ImagePicker";
+import Button from "../../components/Button";
+import Toast from "../../components/Toast";
+import Icon from "../../components/Icon";
+import { ocrService, ExpenseDetails } from "../../services/ocrService";
+import { formatCurrency } from "../../utils/currency";
+import { formatDisplayDate } from "../../utils/date";
+import RNFS from "react-native-fs";
+import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "../../state/authSlice";
 
 type UploadReceiptScreenProps = {
   navigation: StackNavigationProp<CreateStackParamList, "UploadReceipt">;
@@ -32,6 +32,8 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
   navigation,
 }) => {
   const { t } = useTranslation();
+  const { isVehicle } = useAuth();
+
   const { updateForm, resetForm, setOCRResult } = useExpense();
   const [selectedImageUri, setSelectedImageUri] = useState<string>("");
   const [processingOCR, setProcessingOCR] = useState(false);
@@ -60,6 +62,14 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
   React.useEffect(() => {
     resetForm();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      resetForm();
+      setSelectedImageUri("");
+      setOcrResult(null);
+    }, [])
+  );
 
   const handleImageSelected = async (uri: string) => {
     setSelectedImageUri(uri);
@@ -113,7 +123,7 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
           type: response.data.type === "FUEL" ? "Fuel" : "Misc",
           amountFinal: response.data.amount || 0,
 
-          currency: response.data.currency || 'EUR',
+          currency: response.data.currency || "EUR",
 
           date: dateToUse,
           category: mapCategory(response.data.category),
@@ -123,15 +133,11 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
 
         const amount = response.data.amount || 0;
 
-        const currency = response.data.currency || 'EUR';
-        showToast(t("upload.ocrSuccess"), 'success');
-
+        const currency = response.data.currency || "EUR";
+        showToast(t("expenses.ocrSuccess"), "success");
       } else {
         console.log("OCR failed or no data detected:", response.error);
-        showToast(
-          response.error || t("errors.extractFailed"),
-          "info"
-        );
+        showToast(response.error || t("errors.extractFailed"), "info");
       }
     } catch (error) {
       console.error("OCR processing error:", error);
@@ -168,104 +174,125 @@ const UploadReceiptScreen: React.FC<UploadReceiptScreenProps> = ({
   return (
     <SafeAreaView style={styles.container} edges={["left", "right"]}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.content}>
-          <Text style={styles.title}>{t("upload.uploadReceipt")}</Text>
-          <Text style={styles.description}>
-            {t("upload.uploadInstruction")}
-          </Text>
+        {isVehicle ? (
+          <View style={styles.content}>
+            <Text style={styles.title}>{t("upload.uploadReceipt")}</Text>
+            <Text style={styles.description}>
+              {t("upload.uploadInstruction")}
+            </Text>
 
-          {/* Multi-Upload Button */}
-          <TouchableOpacity
-            style={styles.multiUploadButton}
-            onPress={() => navigation.navigate('MultiUpload')}
-          >
-            <Icon name="stack" size={20} color={theme.colors.primary} />
-            <Text style={styles.multiUploadButtonText}>{t("upload.multiReceiptUpload")}</Text>
-            <Icon name="chevron-right" size={16} color={theme.colors.primary} />
-          </TouchableOpacity>
+            {/* Multi-Upload Button */}
+            <TouchableOpacity
+              style={styles.multiUploadButton}
+              onPress={() => navigation.navigate("MultiUpload")}
+            >
+              <Icon name="stack" size={20} color={theme.colors.primary} />
+              <Text style={styles.multiUploadButtonText}>
+                {t("upload.multiReceiptUpload")}
+              </Text>
+              <Icon
+                name="chevron-right"
+                size={16}
+                color={theme.colors.primary}
+              />
+            </TouchableOpacity>
 
-          <ImagePicker
-            onImageSelected={handleImageSelected}
-            selectedImageUri={selectedImageUri}
-          />
-
-          {/* OCR Processing Status */}
-          {processingOCR && selectedImageUri && (
-            <View style={styles.ocrProcessingContainer}>
-              <View style={styles.ocrProcessingContent}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-                <Icon name="search" size={20} color={theme.colors.primary} />
-                <Text style={styles.ocrProcessingText}>
-                  {t("upload.analyzing")}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* OCR Results */}
-          {ocrResult && selectedImageUri && !processingOCR && (
-            <View style={styles.ocrResultsContainer}>
-              <View style={styles.ocrResultsHeader}>
-                <Icon name="check" size={20} color={theme.colors.success} />
-                <Text style={styles.ocrResultsTitle}>
-                  {t("upload.detailsExtracted")}
-                </Text>
-              </View>
-              <View style={styles.ocrResultsContent}>
-                {ocrResult.amount && (
-                  <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>
-                      {t("upload.amount")}:
-                    </Text>
-                    <Text style={styles.ocrResultValue}>
-
-                      {formatCurrency(ocrResult.amount, ocrResult.currency || 'EUR')}
-                    </Text>
-                  </View>
-                )}
-                {ocrResult.merchant && (
-                  <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>
-                      {t("upload.merchant")}:
-                    </Text>
-                    <Text style={styles.ocrResultValue}>
-                      {ocrResult.merchant}
-                    </Text>
-                  </View>
-                )}
-                {ocrResult.type && (
-                  <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>
-                      {t("upload.type")}:
-                    </Text>
-                    <Text style={styles.ocrResultValue}>{ocrResult.type}</Text>
-                  </View>
-                )}
-                {ocrResult.category && (
-                  <View style={styles.ocrResultRow}>
-                    <Text style={styles.ocrResultLabel}>
-                      {t("upload.category")}:
-                    </Text>
-                    <Text style={styles.ocrResultValue}>
-                      {ocrResult.category}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-          )}
-
-          <View style={styles.buttonContainer}>
-            <Button
-              title={t("common.continue")}
-              onPress={handleContinue}
-              disabled={!selectedImageUri || processingOCR}
-              style={styles.primaryButton}
+            <ImagePicker
+              onImageSelected={handleImageSelected}
+              selectedImageUri={selectedImageUri}
             />
-          </View>
 
-          <Text style={styles.note}>💡 {t("upload.tip")}</Text>
-        </View>
+            {/* OCR Processing Status */}
+            {processingOCR && selectedImageUri && (
+              <View style={styles.ocrProcessingContainer}>
+                <View style={styles.ocrProcessingContent}>
+                  <ActivityIndicator
+                    size="small"
+                    color={theme.colors.primary}
+                  />
+                  <Icon name="search" size={20} color={theme.colors.primary} />
+                  <Text style={styles.ocrProcessingText}>
+                    {t("upload.analyzing")}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* OCR Results */}
+            {ocrResult && selectedImageUri && !processingOCR && (
+              <View style={styles.ocrResultsContainer}>
+                <View style={styles.ocrResultsHeader}>
+                  <Icon name="check" size={20} color={theme.colors.success} />
+                  <Text style={styles.ocrResultsTitle}>
+                    {t("upload.detailsExtracted")}
+                  </Text>
+                </View>
+                <View style={styles.ocrResultsContent}>
+                  {ocrResult.amount && (
+                    <View style={styles.ocrResultRow}>
+                      <Text style={styles.ocrResultLabel}>
+                        {t("upload.amount")}:
+                      </Text>
+                      <Text style={styles.ocrResultValue}>
+                        {formatCurrency(
+                          ocrResult.amount,
+                          ocrResult.currency || "EUR"
+                        )}
+                      </Text>
+                    </View>
+                  )}
+                  {ocrResult.merchant && (
+                    <View style={styles.ocrResultRow}>
+                      <Text style={styles.ocrResultLabel}>
+                        {t("upload.merchant")}:
+                      </Text>
+                      <Text style={styles.ocrResultValue}>
+                        {ocrResult.merchant}
+                      </Text>
+                    </View>
+                  )}
+                  {ocrResult.type && (
+                    <View style={styles.ocrResultRow}>
+                      <Text style={styles.ocrResultLabel}>
+                        {t("upload.type")}:
+                      </Text>
+                      <Text style={styles.ocrResultValue}>
+                        {ocrResult.type}
+                      </Text>
+                    </View>
+                  )}
+                  {ocrResult.category && (
+                    <View style={styles.ocrResultRow}>
+                      <Text style={styles.ocrResultLabel}>
+                        {t("upload.category")}:
+                      </Text>
+                      <Text style={styles.ocrResultValue}>
+                        {ocrResult.category}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+
+            <View style={styles.buttonContainer}>
+              <Button
+                title={t("common.continue")}
+                onPress={handleContinue}
+                disabled={!selectedImageUri || processingOCR}
+                style={styles.primaryButton}
+              />
+            </View>
+
+            <Text style={styles.note}>💡 {t("upload.tip")}</Text>
+          </View>
+        ) : (
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <Text style={styles.title}>{t("upload.noVehicleAssigned")}</Text>
+          </View>
+        )}
       </ScrollView>
 
       <Toast
@@ -383,18 +410,18 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   multiUploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: theme.colors.surface,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
     borderRadius: theme.borderRadius.medium,
     marginBottom: theme.spacing.lg,
     borderWidth: 1,
-    borderColor: theme.colors.primary + '20',
+    borderColor: theme.colors.primary + "20",
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -402,7 +429,7 @@ const styles = StyleSheet.create({
   multiUploadButtonText: {
     flex: 1,
     fontSize: theme.fontSize.body,
-    fontWeight: '600',
+    fontWeight: "600",
     color: theme.colors.primary,
     marginLeft: theme.spacing.md,
   },

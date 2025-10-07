@@ -43,42 +43,52 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
   // Helper function to get a valid date string in DD.MM.YYYY format
   const getValidDateString = (dateValue?: string): string => {
     // If we have a valid date string, use it
-    if (dateValue && dateValue !== "nan nan" && dateValue.match(/^\d{2}\.\d{2}\.\d{4}$/)) {
+    if (
+      dateValue &&
+      dateValue !== "nan nan" &&
+      dateValue.match(/^\d{2}\.\d{2}\.\d{4}$/)
+    ) {
       return dateValue;
     }
 
     // Otherwise, return today's date in DD.MM.YYYY format
     const today = new Date();
-    const day = today.getDate().toString().padStart(2, '0');
-    const month = (today.getMonth() + 1).toString().padStart(2, '0');
+    const day = today.getDate().toString().padStart(2, "0");
+    const month = (today.getMonth() + 1).toString().padStart(2, "0");
     const year = today.getFullYear();
 
     return `${day}.${month}.${year}`;
   };
 
   // State for current vehicle data (will be refreshed on screen load)
-  const [currentVehicle, setCurrentVehicle] = useState(authState.driverData?.assignedVehicle || null);
+  const [currentVehicle, setCurrentVehicle] = useState(
+    authState.driverData?.assignedVehicle || null
+  );
   const [vehicleLoading, setVehicleLoading] = useState(false);
 
   // Get the vehicle's current odometer from driver data or refreshed data
   const vehicleOdometer = currentVehicle?.currentOdometer || 0;
 
-  console.log('🚗 Vehicle data for odometer pre-fill:', {
+  console.log("🚗 Vehicle data for odometer pre-fill:", {
     hasDriverData: !!authState.driverData,
     hasVehicle: !!currentVehicle,
     vehicleOdometer,
     currentOdometerValue: currentVehicle?.currentOdometer,
     vehicleId: currentVehicle?._id,
-    vehicleInfo: currentVehicle ? {
-      make: currentVehicle.make,
-      model: currentVehicle.model,
-      licensePlate: currentVehicle.licensePlate
-    } : null,
-    cachedVehicleData: authState.driverData?.assignedVehicle ? {
-      currentOdometer: authState.driverData.assignedVehicle.currentOdometer,
-      make: authState.driverData.assignedVehicle.make,
-      model: authState.driverData.assignedVehicle.model
-    } : null
+    vehicleInfo: currentVehicle
+      ? {
+          make: currentVehicle.make,
+          model: currentVehicle.model,
+          licensePlate: currentVehicle.licensePlate,
+        }
+      : null,
+    cachedVehicleData: authState.driverData?.assignedVehicle
+      ? {
+          currentOdometer: authState.driverData.assignedVehicle.currentOdometer,
+          make: authState.driverData.assignedVehicle.make,
+          model: authState.driverData.assignedVehicle.model,
+        }
+      : null,
   });
 
   const [formData, setFormData] = useState({
@@ -122,62 +132,66 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
   // Function to refresh vehicle data to get current odometer reading
   const refreshVehicleData = async () => {
     if (!authState.user?.assignedVehicleId) {
-      console.log('📍 No assigned vehicle to refresh');
+      console.log("📍 No assigned vehicle to refresh");
       return;
     }
 
     setVehicleLoading(true);
     try {
-      console.log('🔄 Refreshing vehicle data for current odometer...');
+      console.log("🔄 Refreshing vehicle data for current odometer...");
       const response = await vehiclesApi.getMyVehicle();
       if (response.success && response.data) {
         const oldOdometer = currentVehicle?.currentOdometer || 0;
         const newOdometer = response.data.currentOdometer;
 
         setCurrentVehicle(response.data);
-        console.log('✅ Vehicle data refreshed:', {
+        console.log("✅ Vehicle data refreshed:", {
           make: response.data.make,
           model: response.data.model,
           licensePlate: response.data.licensePlate,
           previousOdometer: oldOdometer,
           currentOdometer: newOdometer,
-          odometerChanged: oldOdometer !== newOdometer
+          odometerChanged: oldOdometer !== newOdometer,
         });
 
         if (oldOdometer !== newOdometer) {
-          console.log(`📊 Odometer updated: ${oldOdometer} km → ${newOdometer} km`);
+          console.log(
+            `📊 Odometer updated: ${oldOdometer} km → ${newOdometer} km`
+          );
         }
       }
     } catch (error: any) {
-      console.error('❌ Failed to refresh vehicle data:', {
+      console.error("❌ Failed to refresh vehicle data:", {
         message: error.message,
         status: error.response?.status,
         data: error.response?.data,
-        hasNetworkConnection: error.code !== 'NETWORK_ERROR'
+        hasNetworkConnection: error.code !== "NETWORK_ERROR",
       });
 
       // Fall back to driver data from auth state if refresh fails
       if (authState.driverData?.assignedVehicle) {
-        console.log('📦 Using cached vehicle data as fallback:', {
+        console.log("📦 Using cached vehicle data as fallback:", {
           cachedOdometer: authState.driverData.assignedVehicle.currentOdometer,
           make: authState.driverData.assignedVehicle.make,
-          model: authState.driverData.assignedVehicle.model
+          model: authState.driverData.assignedVehicle.model,
         });
         setCurrentVehicle(authState.driverData.assignedVehicle);
       } else {
-        console.warn('⚠️ No cached vehicle data available, odometer will show 0');
+        console.warn(
+          "⚠️ No cached vehicle data available, odometer will show 0"
+        );
         // Ensure we still have some vehicle info for the form to work
         setCurrentVehicle({
-          _id: 'fallback-vehicle',
-          make: 'Unknown',
-          model: 'Vehicle',
+          _id: "fallback-vehicle",
+          make: "Unknown",
+          model: "Vehicle",
           year: 2023,
-          licensePlate: 'N/A',
-          type: 'CAR',
-          status: 'ACTIVE',
+          licensePlate: "N/A",
+          type: "CAR",
+          status: "ACTIVE",
           currentOdometer: 0, // This will make vehicleOdometer show 0
-          fuelType: 'GASOLINE',
-          color: 'Unknown'
+          fuelType: "GASOLINE",
+          color: "Unknown",
         });
       }
     } finally {
@@ -200,13 +214,13 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
       odometerReading: state.currentForm.odometerReading?.toString() || "",
     };
 
-    console.log('📝 Pre-filling form data:', {
+    console.log("📝 Pre-filling form data:", {
       originalDate: state.currentForm.date,
       validatedDate: newFormData.date,
       hasExistingOdometerReading: !!state.currentForm.odometerReading,
       existingReading: state.currentForm.odometerReading,
       vehicleOdometer,
-      finalOdometerValue: newFormData.odometerReading
+      finalOdometerValue: newFormData.odometerReading,
     });
 
     setFormData(newFormData);
@@ -216,10 +230,14 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
   useEffect(() => {
     // Always refresh vehicle data to get the latest odometer reading from database
     if (authState.user?.assignedVehicleId) {
-      console.log('🔄 Refreshing vehicle data to get latest odometer reading from database');
+      console.log(
+        "🔄 Refreshing vehicle data to get latest odometer reading from database"
+      );
       refreshVehicleData();
     } else {
-      console.log('⚠️ No assigned vehicle found, using cached data if available');
+      console.log(
+        "⚠️ No assigned vehicle found, using cached data if available"
+      );
     }
   }, []); // Run once when component mounts
 
@@ -248,7 +266,9 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
         newErrors.odometerReading = t("validation.odometerInvalid");
       } else if (currentVehicle && currentReading < vehicleOdometer) {
         // Validate against vehicle's current odometer - user cannot enter less than current
-        newErrors.odometerReading = t("validation.odometerTooLow", { current: vehicleOdometer });
+        newErrors.odometerReading = t("validation.odometerTooLow", {
+          current: vehicleOdometer,
+        });
       }
     }
 
@@ -355,9 +375,19 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
             const yearNum = parseInt(year, 10);
 
             // Validate date parts
-            if (!isNaN(dayNum) && !isNaN(monthNum) && !isNaN(yearNum) &&
-                dayNum >= 1 && dayNum <= 31 && monthNum >= 1 && monthNum <= 12 && yearNum > 1900) {
-              dateISO = `${yearNum}-${monthNum.toString().padStart(2, "0")}-${dayNum.toString().padStart(2, "0")}`;
+            if (
+              !isNaN(dayNum) &&
+              !isNaN(monthNum) &&
+              !isNaN(yearNum) &&
+              dayNum >= 1 &&
+              dayNum <= 31 &&
+              monthNum >= 1 &&
+              monthNum <= 12 &&
+              yearNum > 1900
+            ) {
+              dateISO = `${yearNum}-${monthNum
+                .toString()
+                .padStart(2, "0")}-${dayNum.toString().padStart(2, "0")}`;
               const dateObj = new Date(dateISO);
               if (!isNaN(dateObj.getTime())) {
                 expenseData.date = dateObj.toISOString();
@@ -374,7 +404,9 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
       }
 
       // Add currency (always required by backend)
-      expenseData.currency = formData.currency ? formData.currency.toUpperCase() : 'EUR';
+      expenseData.currency = formData.currency
+        ? formData.currency.toUpperCase()
+        : "EUR";
 
       console.log("Creating expense with data:", expenseData);
       const newExpense = await expensesApi.create(expenseData);
@@ -413,7 +445,7 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
 
   const openDatePicker = () => {
     // Parse current date from DD.MM.YYYY format
-    if (formData.date && formData.date.includes('.')) {
+    if (formData.date && formData.date.includes(".")) {
       const parts = formData.date.split(".");
       if (parts.length === 3) {
         const day = parseInt(parts[0], 10);
@@ -421,8 +453,16 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
         const year = parseInt(parts[2], 10);
 
         // Validate parsed values before creating date
-        if (!isNaN(day) && !isNaN(month) && !isNaN(year) &&
-            day >= 1 && day <= 31 && month >= 0 && month <= 11 && year > 1900) {
+        if (
+          !isNaN(day) &&
+          !isNaN(month) &&
+          !isNaN(year) &&
+          day >= 1 &&
+          day <= 31 &&
+          month >= 0 &&
+          month <= 11 &&
+          year > 1900
+        ) {
           const date = new Date(year, month, day);
           // Double-check the date is valid
           if (!isNaN(date.getTime())) {
@@ -618,10 +658,14 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
                 />
                 <Text
                   style={
-                    formData.date && formData.date !== "nan nan" ? styles.dateText : styles.datePlaceholder
+                    formData.date && formData.date !== "nan nan"
+                      ? styles.dateText
+                      : styles.datePlaceholder
                   }
                 >
-                  {formData.date && formData.date !== "nan nan" ? formData.date : "DD.MM.YYYY"}
+                  {formData.date && formData.date !== "nan nan"
+                    ? formData.date
+                    : "DD.MM.YYYY"}
                 </Text>
               </TouchableOpacity>
               {errors.date && (
@@ -644,13 +688,19 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
                 <Icon
                   name="refresh"
                   size={16}
-                  color={vehicleLoading ? theme.colors.textSecondary : theme.colors.primary}
+                  color={
+                    vehicleLoading
+                      ? theme.colors.textSecondary
+                      : theme.colors.primary
+                  }
                 />
-                <Text style={[
-                  styles.refreshButtonText,
-                  vehicleLoading && styles.refreshButtonTextDisabled
-                ]}>
-                  {vehicleLoading ? 'Updating...' : 'Refresh'}
+                <Text
+                  style={[
+                    styles.refreshButtonText,
+                    vehicleLoading && styles.refreshButtonTextDisabled,
+                  ]}
+                >
+                  {vehicleLoading ? "Updating..." : "Refresh"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -667,16 +717,15 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
             {/* Show vehicle info hint if available */}
             {currentVehicle && (
               <Text style={styles.vehicleHint}>
-                {currentVehicle.make} {currentVehicle.model} ({currentVehicle.licensePlate}) - {' '}
-                {vehicleOdometer > 0 ?
-                  t('expense.currentOdometer:', { odometer: vehicleOdometer }) :
-                  t('expense.newVehicle') || 'Odometer reading needed'
-                }{vehicleOdometer} KM
-                {vehicleLoading && ` ${t('expense.updating')}`}
+                {currentVehicle.make} {currentVehicle.model} (
+                {currentVehicle.licensePlate}) -{" "}
+                {vehicleOdometer > 0
+                  ? t("expense.currentOdometer:", { odometer: vehicleOdometer })
+                  : t("expense.newVehicle") || "Odometer reading needed"}
+                {vehicleOdometer} KM
+                {vehicleLoading && ` ${t("expense.updating")}`}
               </Text>
             )}
-          
-           
 
             {currentVehicle &&
               formData.odometerReading &&
@@ -845,13 +894,13 @@ const ExpenseFormScreen: React.FC<ExpenseFormScreenProps> = ({
 
             <View style={styles.modalButtons}>
               <Button
-                title="Cancel"
+                title={t("common.cancel")}
                 onPress={handleDateCancel}
                 variant="outline"
                 style={styles.modalButton}
               />
               <Button
-                title="Select"
+                title={t("common.select")}
                 onPress={() => handleDateSelect(selectedCalendarDate)}
                 style={styles.modalButton}
               />
@@ -1194,11 +1243,11 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.small,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.xs,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   refreshButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -1208,7 +1257,7 @@ const styles = StyleSheet.create({
   refreshButtonText: {
     fontSize: theme.fontSize.tiny,
     color: theme.colors.primary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   refreshButtonTextDisabled: {
     color: theme.colors.textSecondary,

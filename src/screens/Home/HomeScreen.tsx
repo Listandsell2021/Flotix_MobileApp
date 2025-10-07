@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Modal,
   Image,
+  StatusBar,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -25,9 +26,9 @@ import Toast from "../../components/Toast";
 import Icon from "../../components/Icon";
 
 const HomeScreen: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
-  const { logout, state } = useAuth();
+  const { logout, state, setIsVehicle } = useAuth();
 
   // Debug: Log auth state to see what vehicle data we have
   console.log("🔍 HomeScreen Auth State:", {
@@ -128,11 +129,15 @@ const HomeScreen: React.FC = () => {
         userId: state.user?._id,
         userRole: state.user?.role,
         userCompanyId: state.user?.companyId,
-        assignedVehicleId: assignedVehicleId
+        assignedVehicleId: assignedVehicleId,
       });
 
       const response = await vehiclesApi.getVehicleDetails(assignedVehicleId);
       setVehicleData(response.data);
+      if (response.data) {
+        setIsVehicle(true);
+      }
+      console.log("vehicle data : ", response.data);
       console.log("Vehicle data loaded successfully:", response.data);
     } catch (error: any) {
       console.error("Error loading vehicle data:", error);
@@ -145,8 +150,8 @@ const HomeScreen: React.FC = () => {
             userId: state.user?._id,
             assignedVehicleId: state.user?.assignedVehicleId,
             role: state.user?.role,
-            companyId: state.user?.companyId
-          }
+            companyId: state.user?.companyId,
+          },
         });
         showToast(t("errors.loadVehicle"), "error");
       } else {
@@ -255,7 +260,7 @@ const HomeScreen: React.FC = () => {
                   <Icon name="money" size={16} color="#ffffff" />
                 </View>
                 <View style={styles.compactAppInfo}>
-                  <Text style={styles.compactAppName}>{t('app.name')}</Text>
+                  <Text style={styles.compactAppName}>{t("app.name")}</Text>
                   <Text style={styles.compactAppSubtitle}>
                     {t("home.expenseTracker")}
                   </Text>
@@ -284,7 +289,7 @@ const HomeScreen: React.FC = () => {
                   {state.user.name?.split(" ")[0] || t("home.driver")}
                 </Text>
                 <Text style={styles.compactDateText}>
-                  {new Date().toLocaleDateString("de-DE", {
+                  {new Date().toLocaleDateString(i18n.language, {
                     weekday: "long",
                     day: "numeric",
                     month: "long",
@@ -342,33 +347,33 @@ const HomeScreen: React.FC = () => {
             </View>
 
             {/* Compact Vehicle Info Box */}
-            <View style={styles.compactVehicleContainer}>
-              <View style={styles.compactVehicleBox}>
-                <View style={styles.compactVehicleLeft}>
-                  <View style={styles.compactVehicleIcon}>
-                    <Icon name="car" size={18} color="#ffffff" />
+            {vehicleData && (
+              <View style={styles.compactVehicleContainer}>
+                <View style={styles.compactVehicleBox}>
+                  <View style={styles.compactVehicleLeft}>
+                    <View style={styles.compactVehicleIcon}>
+                      <Icon name="car" size={18} color="#ffffff" />
+                    </View>
+                    <View style={styles.compactVehicleInfo}>
+                      <Text style={styles.compactVehicleTitle}>
+                        {`${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`}
+                      </Text>
+                      <Text style={styles.compactVehiclePlate}>
+                        {vehicleData?.licensePlate}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.compactVehicleInfo}>
-                    <Text style={styles.compactVehicleTitle}>
-                      {vehicleData
-                        ? `${vehicleData.year} ${vehicleData.make} ${vehicleData.model}`
-                        : "2023 Toyota Camrysss"}
+                  <View style={styles.compactOdometerBox}>
+                    <Text style={styles.compactOdometerValue}>
+                      {vehicleData.currentOdometer.toLocaleString()}
                     </Text>
-                    <Text style={styles.compactVehiclePlate}>
-                      {vehicleData?.licensePlate || "ABC-123"}
+                    <Text style={styles.compactOdometerLabel}>
+                      {t("home.km")}
                     </Text>
                   </View>
-                </View>
-                <View style={styles.compactOdometerBox}>
-                  <Text style={styles.compactOdometerValue}>
-                    {vehicleData
-                      ? vehicleData.currentOdometer.toLocaleString()
-                      : "45,230"}
-                  </Text>
-                  <Text style={styles.compactOdometerLabel}>{t('home.km')}</Text>
                 </View>
               </View>
-            </View>
+            )}
 
             {/* Recent Activity - Clean & Compact Design */}
             <View style={styles.recentContainer}>
@@ -437,12 +442,12 @@ const HomeScreen: React.FC = () => {
               )}
             </View>
 
-            <Button
+            {/* <Button
               title={t("auth.logout")}
               onPress={handleLogout}
               variant="outline"
               style={styles.logoutButton}
-            />
+            /> */}
           </>
         )}
       </ScrollView>
@@ -580,6 +585,8 @@ const HomeScreen: React.FC = () => {
         type={toast.type}
         onHide={hideToast}
       />
+
+      {/* <StatusBar barStyle={"light-content"} backgroundColor={"#0284c7"} /> */}
     </SafeAreaView>
   );
 };
@@ -587,12 +594,13 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: theme.colors.primary,
   },
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing.lg,
     paddingBottom: 100, // Space for FAB
+    backgroundColor: "#f8f9fa",
   },
   header: {
     backgroundColor: "linear-gradient(135deg, #0284c7 0%, #764ba2 100%)",

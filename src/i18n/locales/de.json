@@ -25,7 +25,15 @@
     "select": "Auswählen",
     "close": "Schließen",
     "goBack": "Zurückgehen",
-    "continue": "Fortfahren"
+    "continue": "Fortfahren",
+    "ready": "Bereit",
+    "total": "gesamt",
+    "uploading": "Hochladen...",
+    "uploaded": "hochgeladen",
+    "failed": "Fehlgeschlagen",
+    "pending": "Ausstehend",
+    "upload": "Hochladen",
+    "remove": "Entfernen"
   },
   "auth": {
     "login": "Anmelden",
@@ -200,7 +208,27 @@
     "uploaded": "Beleg hochgeladen",
     "uploadInstruction": "Machen Sie ein Foto oder wählen Sie ein Bild Ihres Belegs aus. Wir extrahieren die Informationen automatisch per OCR.",
     "tip": "Tipp: Um optimale OCR-Ergebnisse zu erzielen, stellen Sie sicher, dass der Beleg gut beleuchtet und der Text deutlich sichtbar ist.",
-    "multiReceiptUpload": "Mehrfach-Beleg-Upload"
+    "multiUpload": "Hochladen mehrerer Belege",
+    "select10Images": "Wählen Sie bis zu 10 Bilder aus",
+    "captureNewReceipt": "Erfassen Sie eine neue Quittung",
+    "noReceipts": "Noch keine Quittung",
+    "multiInstruction": "Laden Sie mehrere Belege hoch, um sie effizient im Stapel zu verarbeiten",
+    "batchUpload": "Batch-Upload",
+    "processMultipleReceipts": "Verarbeiten Sie mehrere Belege",
+    "vehicleOdomterReading": "Kilometerstand des Fahrzeugs",
+    "enterCurrentKm": "Geben Sie die aktuellen Kilometer ein",
+    "uploadAll": "Alle Hochladen",
+    "addReceipts": "Belege Hinzufügen",
+    "ocrFailedOne": "OCR für einen Beleg fehlgeschlagen",
+    "ocrFailed": "Die Verarbeitung des Belegs ist fehlgeschlagen",
+    "cameraFailed": "Kamerabild konnte nicht verarbeitet werden",
+    "noValidUpload": "Keine gültigen Belege zum Hochladen",
+    "uploadedSuccess": "Erfolgreich hochgeladen",
+    "uploadAllExpense": "Alle Ausgaben hochladen",
+    "alterRemove": "Möchten Sie diesen Beleg wirklich entfernen?",
+    "reomveReceipt": "Quittung entfernen",
+    "multiReceiptUpload": "Mehrfach-Beleg-Upload",
+    "noVehicleAssigned": "Kein Fahrzeug zugewiesen"
   },
   "profile": {
     "title": "Profil",
@@ -258,7 +286,8 @@
     "createExpense": "Ausgabe erstellen",
     "expenseDetails": "Ausgabendetails",
     "uploadReceipt": "Beleg hochladen",
-    "expenseHistory": "Ausgabenhistorie"
+    "expenseHistory": "Ausgabenhistorie",
+    "me": "Mich"
   },
   "form": {
     "storeName": "Geschäftsname",
@@ -313,12 +342,30 @@
     "captureImage": "Bildaufnahme fehlgeschlagen",
     "ocrFailed": "OCR fehlgeschlagen",
     "uploadFailed": "Beleg-Upload fehlgeschlagen, Platzhalter wird verwendet",
-    "extractFailed": "Details konnten nicht extrahiert werden"
+    "extractFailed": "Details konnten nicht extrahiert werden",
+    "server": "Unerwartete Antwort vom Server",
+    "allFailedExpense": "Das Hochladen aller Ausgaben ist fehlgeschlagen",
+    "uploadFailedAlert": "Hochladen fehlgeschlagen",
+    "deleteExpense": "Ausgabe konnte nicht gelöscht werden",
+    "timeLimitExceeded": "Ausgabe kann nicht mehr gelöscht werden (Zeitlimit überschritten)"
   },
   "success": {
     "expenseCreated": "Ausgabe erfolgreich erstellt!",
     "editNotImplemented": "Bearbeitungsfunktion noch nicht implementiert",
     "deleteNotImplemented": "Löschfunktion noch nicht implementiert"
+  },
+  "permissions": {
+    "cameraRequired": "Kamerazugriff erforderlich",
+    "cameraRequiredMessage": "Diese App benötigt Zugriff auf die Kamera, um Fotos von Belegen aufzunehmen. Bitte erteile die Kameraberechtigung, um fortzufahren.",
+    "cameraBlocked": "Kamerazugriff blockiert",
+    "cameraBlockedMessage": "Der Kamerazugriff wurde dauerhaft verweigert. Bitte aktiviere ihn in den Einstellungen, um Fotos von Belegen aufzunehmen.",
+    "cameraError": "Fehler bei der Kameraberechtigung. Bitte versuche es erneut.",
+    "photoLibraryRequired": "Zugriff auf Fotomediathek erforderlich",
+    "photoLibraryRequiredMessage": "Diese App benötigt Zugriff auf die Fotomediathek, um Belegbilder auszuwählen. Bitte erteile die entsprechende Berechtigung, um fortzufahren.",
+    "photoLibraryBlocked": "Zugriff auf Fotomediathek blockiert",
+    "photoLibraryBlockedMessage": "Der Zugriff auf die Fotomediathek wurde dauerhaft verweigert. Bitte aktiviere ihn in den Einstellungen, um Belegbilder auszuwählen.",
+    "photoLibraryError": "Fehler bei der Berechtigung für die Fotomediathek. Bitte versuche es erneut.",
+    "openSettings": "Einstellungen öffnen"
   },
   "multiUpload": {
     "title": "Stapel-Upload",
@@ -382,6 +429,9 @@
       "failedToUpload": "Ausgaben konnten nicht hochgeladen werden",
       "failedToProcess": "Kamerabild konnte nicht verarbeitet werden",
       "unknownError": "Unbekannter Fehler"
-    }
+    },
+    "uploadSuccess": "{{count}} Ausgabe(n) erfolgreich hochgeladen",
+    "uploadSummary": "{{successCount}} Ausgabe(n) erfolgreich hochgeladen.\n\n{{failCount}} fehlgeschlagen:\n{{errorMessages}}",
+    "allFailedMessage": "Alle Ausgaben konnten nicht hochgeladen werden:\n\n{{errorMessages}}"
   }
 }
