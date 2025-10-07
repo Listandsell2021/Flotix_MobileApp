@@ -82,23 +82,9 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
 
   const openImageLibrary = async () => {
     try {
-      console.log('Requesting photo library permission...');
-      const permissionResult = await permissionManager.requestPermission('photoLibrary');
+      console.log('Launching photo picker...');
 
-      if (!permissionResult.granted) {
-        console.log('Photo library permission not granted:', permissionResult.message);
-        if (permissionResult.message && !permissionResult.shouldShowSettings) {
-          Alert.alert(
-            t("permissions.photoLibraryRequired"),
-            permissionResult.message
-          );
-        }
-        return;
-      }
-
-      console.log('Photo library permission granted, launching library...');
-
-      // Permission granted, launch image library
+      // Use photo picker - no permissions needed on modern Android
       const options = {
         mediaType: "photo" as MediaType,
         includeBase64: false,
@@ -106,14 +92,15 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
         maxWidth: 2000,
         quality: 0.8 as any,
         selectionLimit: 1, // Limit to 1 image
+        presentationStyle: 'fullScreen' as any,
       };
 
       launchImageLibrary(options, handleResponse);
     } catch (error) {
-      console.error('Photo library launch error:', error);
+      console.error('Photo picker launch error:', error);
       Alert.alert(
         t("common.error"),
-        t("permissions.photoLibraryError")
+        t("common.unknownError")
       );
     }
   };

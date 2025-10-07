@@ -73,6 +73,8 @@ const ExpenseCamera: React.FC<ExpenseCameraProps> = ({
       includeBase64: true,
       maxWidth: 1200,
       maxHeight: 1600,
+      selectionLimit: 1,
+      presentationStyle: 'fullScreen' as any,
     };
 
     // Use callback-based approach like working ImagePicker
