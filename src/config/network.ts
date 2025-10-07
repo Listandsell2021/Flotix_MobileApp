@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
 /**
  * Network configuration helper for different development environments
@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 export const getApiUrl = (): string => {
   // In production, use environment variable
   if (!__DEV__) {
-    return process.env.API_URL || 'https://your-production-api.com';
+    return process.env.API_URL || "https://your-production-api.com";
   }
 
   // Development configuration
@@ -17,7 +17,8 @@ export const getApiUrl = (): string => {
 
   // Default to system IP for mobile development
   // This works for both physical devices and emulators
-  return 'http://192.168.188.45:3001';
+  return "http://192.168.1.10:3001";
+  return "https://api.flotix.listandsell.de/";
 };
 
 /**
@@ -38,13 +39,13 @@ export const API_URL = getApiUrl();
 
 // Log configuration for debugging
 if (__DEV__) {
-  console.log('📡 API Configuration:', {
+  console.log("📡 API Configuration:", {
     platform: Platform.OS,
     apiUrl: API_URL,
     isPhysicalDevice: !__DEV__ || undefined,
   });
 
   if (!process.env.API_URL) {
-    console.log('💡 Network Setup:', getNetworkInstructions());
+    console.log("💡 Network Setup:", getNetworkInstructions());
   }
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import HomeScreen from "../screens/Home/HomeScreen";
 import CreateStack from "./CreateStack";
@@ -20,26 +20,43 @@ export type AppTabsParamList = {
 
 const Tab = createBottomTabNavigator<AppTabsParamList>();
 
-const TabBarIcon: React.FC<{ focused: boolean; iconName: IconName }> = ({
-  focused,
-  iconName,
-}) => {
+const TabBarIcon: React.FC<{
+  focused: boolean;
+  iconName: IconName;
+  tabName: string;
+}> = ({ focused, iconName, tabName }) => {
   return (
-    <View
-      style={{
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: focused ? theme.colors.primary + "15" : "transparent",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Icon
-        name={iconName}
-        size={20}
-        color={focused ? theme.colors.primary : theme.colors.textSecondary}
-      />
+    <View style={{ justifyContent: "center", alignItems: "center" }}>
+      <View
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          backgroundColor: focused
+            ? theme.colors.primary + "15"
+            : "transparent",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Icon
+          name={iconName}
+          size={20}
+          color={focused ? theme.colors.primary : theme.colors.textSecondary}
+        />
+      </View>
+      {/* <Text
+        style={{
+          fontSize: 10,
+          color: focused ? theme.colors.primary : theme.colors.textSecondary,
+          marginTop: 1,
+          textAlign: "center",
+        }}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
+        {tabName}
+      </Text> */}
     </View>
   );
 };
@@ -57,9 +74,9 @@ const AppTabs: React.FC = () => {
         tabBarStyle: {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
-          // height: 60,
+          // height: 50,
           paddingBottom: insets.bottom + 8,
-          paddingTop: 8,
+          paddingTop: 10,
         },
         headerStyle: {
           backgroundColor: theme.colors.surface,
@@ -79,9 +96,17 @@ const AppTabs: React.FC = () => {
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} iconName="home" />
+            <TabBarIcon
+              focused={focused}
+              iconName="home"
+              tabName={t("navigation.home")}
+            />
           ),
-          tabBarLabel: () => null,
+          // tabBarIconStyle: {
+
+          // },
+          tabBarLabel: t("navigation.home"),
+          // tabBarLabelStyle: { marginBottom: 10 },
         }}
       />
       <Tab.Screen
@@ -90,9 +115,13 @@ const AppTabs: React.FC = () => {
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} iconName="plus" />
+            <TabBarIcon
+              focused={focused}
+              iconName="plus"
+              tabName={t("navigation.add")}
+            />
           ),
-          tabBarLabel: () => null,
+          tabBarLabel: t("navigation.add"),
         }}
       />
       <Tab.Screen
@@ -101,22 +130,29 @@ const AppTabs: React.FC = () => {
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} iconName="chart" />
+            <TabBarIcon
+              focused={focused}
+              iconName="chart"
+              tabName={t("navigation.history")}
+            />
           ),
-          tabBarLabel: () => null,
+          tabBarLabel: t("navigation.history"),
         }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
-
           title: t("navigation.profile"),
           tabBarIcon: ({ focused }) => (
-            <TabBarIcon focused={focused} iconName="user" />
+            <TabBarIcon
+              focused={focused}
+              iconName="user"
+              tabName={t("navigation.me")}
+            />
           ),
 
-          tabBarLabel: () => null,
+          tabBarLabel: t("navigation.me"),
         }}
       />
     </Tab.Navigator>

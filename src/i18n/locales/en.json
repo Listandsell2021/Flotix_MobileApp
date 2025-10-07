@@ -25,7 +25,15 @@
     "select": "Select",
     "close": "Close",
     "goBack": "Go Back",
-    "continue": "Continue"
+    "continue": "Continue",
+    "ready": "Ready",
+    "total": "Total",
+    "uploading": "Uploading...",
+    "uploaded": "Uploaded",
+    "failed": "Failed",
+    "pending": "Pending",
+    "upload": "Upload",
+    "remove": "Remove"
   },
   "auth": {
     "login": "Login",
@@ -200,7 +208,27 @@
     "uploaded": "Receipt uploaded",
     "uploadInstruction": "Take a photo or select an image of your receipt. We'll extract the information automatically using OCR.",
     "tip": "Tip: For best OCR results, ensure the receipt is well-lit and the text is clearly visible.",
-    "multiReceiptUpload": "Multi-Receipt Upload"
+    "multiUpload": "Multi-Receipt Upload",
+    "select10Images": "Select up to 10 images",
+    "captureNewReceipt": "Capture a new receipt",
+    "noReceipts": "No Receipt Yet",
+    "multiInstruction": "Upload multiple receipts to process them efficiently in batch",
+    "batchUpload": "Batch Upload",
+    "processMultipleReceipts": "Process multiple receipts",
+    "vehicleOdomterReading": "Vehicle odometer reading",
+    "enterCurrentKm": "Enter current kilometers",
+    "uploadAll": "Upload All",
+    "addReceipts": "Add Receipts",
+    "ocrFailedOne": "OCR failed for one receipt",
+    "ocrFailed": "Failed to process receipt",
+    "cameraFailed": "Failed to process camera image",
+    "noValidUpload": "No valid receipts to upload",
+    "uploadedSuccess": "Successfully uploaded",
+    "uploadAllExpense": "Upload All Expenses",
+    "alterRemove": "Are you sure you want to remove this receipt?",
+    "reomveReceipt": "Remove Receipt",
+    "multiReceiptUpload": "Multi-Receipt Upload",
+    "noVehicleAssigned": "No Vehicle Assigned"
   },
   "profile": {
     "title": "Profile",
@@ -258,7 +286,8 @@
     "createExpense": "Create Expense",
     "expenseDetails": "Expense Details",
     "uploadReceipt": "Upload Receipt",
-    "expenseHistory": "Expense History"
+    "expenseHistory": "Expense History",
+    "me": "Me"
   },
   "form": {
     "storeName": "Store Name",
@@ -313,7 +342,12 @@
     "captureImage": "Failed to capture image",
     "ocrFailed": "OCR Failed",
     "uploadFailed": "Receipt upload failed, using placeholder",
-    "extractFailed": "Could not extract details"
+    "extractFailed": "Could not extract details",
+    "server": "Unexpected response from server",
+    "allFailedExpense": "All expenses failed to upload",
+    "uploadFailedAlert": "Upload Failed",
+    "deleteExpense": "Failed to delete expense",
+    "timeLimitExceeded": "Expense can no longer be deleted (time limit exceeded)"
   },
   "success": {
     "expenseCreated": "Expense created successfully!",
@@ -395,6 +429,9 @@
       "failedToUpload": "Failed to upload expenses",
       "failedToProcess": "Failed to process camera image",
       "unknownError": "Unknown error"
-    }
+    },
+    "uploadSuccess": "Successfully uploaded {{count}} expense(s)",
+    "uploadSummary": "{{successCount}} expense(s) uploaded successfully.\n\n{{failCount}} failed:\n{{errorMessages}}",
+    "allFailedMessage": "All expenses failed to upload:\n\n{{errorMessages}}"
   }
 }
