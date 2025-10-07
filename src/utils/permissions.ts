@@ -8,7 +8,7 @@ import {
   openSettings,
 } from 'react-native-permissions';
 
-export type PermissionType = 'camera' | 'photoLibrary' | 'location';
+export type PermissionType = 'camera' | 'location';
 
 export interface PermissionResult {
   granted: boolean;
@@ -22,12 +22,6 @@ class PermissionManager {
       camera: Platform.select({
         ios: PERMISSIONS.IOS.CAMERA,
         android: PERMISSIONS.ANDROID.CAMERA,
-      }),
-      photoLibrary: Platform.select({
-        ios: PERMISSIONS.IOS.PHOTO_LIBRARY,
-        android: Platform.Version >= 33
-          ? PERMISSIONS.ANDROID.READ_MEDIA_IMAGES
-          : PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
       }),
       location: Platform.select({
         ios: PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
@@ -45,12 +39,6 @@ class PermissionManager {
         message: 'Flotix needs camera access to capture receipt photos for expense tracking.',
         blockedTitle: 'Camera Access Blocked',
         blockedMessage: 'Camera access is required to take photos. Please enable it in Settings.',
-      },
-      photoLibrary: {
-        title: 'Photo Library Permission Required',
-        message: 'Flotix needs photo library access to select receipt images.',
-        blockedTitle: 'Photo Library Access Blocked',
-        blockedMessage: 'Photo library access is required. Please enable it in Settings.',
       },
       location: {
         title: 'Location Permission Required',
@@ -189,16 +177,13 @@ class PermissionManager {
   // Utility method to check if any critical permissions are missing
   async checkCriticalPermissions(): Promise<{
     camera: PermissionResult;
-    photoLibrary: PermissionResult;
     allGranted: boolean;
   }> {
     const camera = await this.checkPermission('camera');
-    const photoLibrary = await this.checkPermission('photoLibrary');
 
     return {
       camera,
-      photoLibrary,
-      allGranted: camera.granted && photoLibrary.granted,
+      allGranted: camera.granted,
     };
   }
 }

@@ -1,4 +1,4 @@
-package com.fleet
+package com.Flotix.listandsell
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

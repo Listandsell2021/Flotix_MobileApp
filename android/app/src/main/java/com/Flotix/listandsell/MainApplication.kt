@@ -1,4 +1,4 @@
-package com.fleet
+package com.Flotix.listandsell
 
 import android.app.Application
 import com.facebook.react.PackageList

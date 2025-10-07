@@ -6,7 +6,7 @@ import { Platform } from 'react-native';
 export const getApiUrl = (): string => {
   // In production, use environment variable
   if (!__DEV__) {
-    return process.env.API_URL || 'https://your-production-api.com';
+    return process.env.API_URL || 'https://api.flotix.listandsell.de';
   }
 
   // Development configuration
@@ -15,9 +15,9 @@ export const getApiUrl = (): string => {
     return envUrl;
   }
 
-  // Default to system IP for mobile development
+  // Default to production API for mobile development
   // This works for both physical devices and emulators
-  return 'http://192.168.188.45:3001';
+  return 'https://api.flotix.listandsell.de';
 };
 
 /**
